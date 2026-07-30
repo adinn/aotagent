@@ -7,7 +7,7 @@ when using an AOT cache.
 The Java agent performs one simple instrumentation to
 method `HelloAgent.main()`.
 ```
-java.lang.Thread.run():
+HelloAgent.main():
    . . .        . . .
    RETURN  -->  INVOKESTATIC AOTAgentStatistics.print()
    . . .         RETURN
@@ -127,7 +127,7 @@ linkage that is supposed occur in current runtime. In order to avoid
 this possibilty the JVM rejects use of the cache, prioritizing
 correctness before performance.
 
-#### Creating an AOT compatible cache
+#### Creating an agent compatible AOT cache
 The solution is to ensure that module `java.instrument` is included
 in the module graph when the cache is built.
 ```shell
