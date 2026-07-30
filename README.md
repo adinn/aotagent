@@ -254,3 +254,14 @@ No agent statistics to report
 Note also that since class `HelloAgent` has been excluded from the AOT 
 cache it will be loaded as normal after the agent transformer has been
 installed. So, there is no need to pass the retransform option to the agent.  
+
+### Further refinements
+
+This is only a simple example that jumps over the
+most basic hurdle that gets in the way of deploying
+an agent with an AOT Cache. The repository contains
+several other variants of the agent which address
+issues that arise when the agent tries to do more
+complex things like instrumenting bootstrap classes.
+
+<details to follow>
