@@ -264,4 +264,4 @@ several other variants of the agent which address
 issues that arise when the agent tries to do more
 complex things like instrumenting bootstrap classes.
 
-<details to follow>
+Details to follow
