@@ -1,10 +1,28 @@
 # Simple AOT-compatible Java Agent
 
-A simple Java JVMTI  agent which shows how to reliably
-instrument application classes when using an AOT cache.
+This maven-based project provides guidance for
+implementing and deploying agents that are compatible
+with use of an AOT cache.
+
+The project's main branch presents a simple agent that
+instruments code belonging to a small test application
+and shows how to create and AOT cache and deploy the
+agent in a production run that uses the cache.
+
+More sophisticated versions of the agent, which implement
+features agent writers often need to employ or exemplify
+best practice for structuring an agent, are presented in
+other branches of the project (listed and linked at the
+bottom of this file). The README files in those branches
+explain the additonal behaviour or structural benefits the
+variant agent offers and details the changes needed to
+build and deploy the agent compatibly with use of and AOT
+cache.
+
+
 ### Introduction
-The Java agent performs one simple instrumentation to
-method `HelloAgent.main()`.
+This simple versions of the agent performs one instrumentation
+to method `HelloAgent.main()`.
 ```
 HelloAgent.main():
    . . .        . . .
@@ -15,6 +33,7 @@ HelloAgent.main():
 The transformation locates any `RETURN` bytecode in the main
 and replaces it with a call to the static `print` method of
 class `AOTAgentStatistics`.
+
 Note that in this simple version of the agent stats are not
 being collected so the print method reports no results.
 
