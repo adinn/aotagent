@@ -1,8 +1,7 @@
 # Simple AOT-compatible Java Agent
 
 A simple Java JVMTI  agent which shows how to reliably
-instrument application classes loaded by the JDK bootstrap
-when using an AOT cache.
+instrument application classes when using an AOT cache.
 ### Introduction
 The Java agent performs one simple instrumentation to
 method `HelloAgent.main()`.
