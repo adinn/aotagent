@@ -156,7 +156,9 @@ prioritizing correctness before performance.
 The solution is to ensure that module `java.instrument` is included
 in the module graph when the cache is built.
 ```shell
-$ java -XX:AOTCacheOutput=HelloAgent.aot --add-modules=java.instrument -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
+$ java -XX:AOTCacheOutput=HelloAgent.aot \
+    --add-modules=java.instrument \
+    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
 Hello from AOT Agent
 Hello from AOT Agent
 Hello from AOT Agent
@@ -175,7 +177,9 @@ classpath found at runtime matches the one used when building the
 cache. This guarantees that the class linkage employed when building
 the cache matches the class linkage used during the production run.
 ```shell
-$ java -XX:AOTCache=HelloAgent.aot -javaagent:agent/target/aotagent-agent-1.0-SNAPSHOT.jar  -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
+$ java -XX:AOTCache=HelloAgent.aot \
+    -javaagent:agent/target/aotagent-agent-1.0-SNAPSHOT.jar \
+    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
 Hello from AOT Agent
 Hello from AOT Agent
 Hello from AOT Agent
@@ -213,7 +217,9 @@ to do just that. Appending agent argument `"retransform"` to the
 any target classes that it finds already loaded.
 
 ```shell
-java -XX:AOTCache=HelloAgent.aot -javaagent:agent/target/aotagent-agent-1.0-SNAPSHOT.jar=retransform  -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
+java -XX:AOTCache=HelloAgent.aot \
+    -javaagent:agent/target/aotagent-agent-1.0-SNAPSHOT.jar=retransform \
+    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
 Hello from AOT Agent
 Hello from AOT Agent
 Hello from AOT Agent
@@ -240,7 +246,9 @@ is nothing to stop the agent being used during training (more complex
 variants of the agent will provide more details as to what does and
 does not work).
 ```shell
-$ java -XX:AOTCacheOutput=HelloAgent.aot -javaagent:agent/target/aotagent-agent-1.0-SNAPSHOT.jar -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
+$ java -XX:AOTCacheOutput=HelloAgent.aot \
+    -javaagent:agent/target/aotagent-agent-1.0-SNAPSHOT.jar \
+    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
 [0.828s][warning][aot] Skipping HelloAgent: From ClassFileLoadHook
 Hello from AOT Agent
 Hello from AOT Agent
@@ -260,7 +268,7 @@ Reading AOTConfiguration HelloAgent.aot.config and writing AOTCache HelloAgent.a
 AOTCache creation is complete: HelloAgent.aot 12095488 bytes
 Removed temporary AOT configuration file HelloAgent.aot.config
 ```
-Note that this resolves boththe issues encountered above. Firstly,
+Note that this resolves both the issues encountered above. Firstly,
 the AOT cache build process excludes class `HelloAgent` from
 the cache because it was transformed during the training run
 (the bytes used during training are recognzied as having been
@@ -273,7 +281,9 @@ line. The module is automatically added leading to the same
 configuration for the training and production runs.
 
 ```shell
-`$ java -XX:AOTCache=HelloAgent.aot -javaagent:agent/target/aotagent-agent-1.0-SNAPSHOT.jar -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
+`$ java -XX:AOTCache=HelloAgent.aot \
+    -javaagent:agent/target/aotagent-agent-1.0-SNAPSHOT.jar \
+    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
 Hello from AOT Agent
 Hello from AOT Agent
 Hello from AOT Agent
