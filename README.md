@@ -1,4 +1,4 @@
-# Simple AOT-compatible Java Agent
+# AOT-compatible Java Agent Guidelines
 
 This maven-based project provides guidance for
 implementing and deploying agents that are compatible
