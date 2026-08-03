@@ -1,5 +1,7 @@
 package org.my.aotagent.internal;
 
+import org.my.aotagent.main.AOTAgentMain;
+
 import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
 
@@ -10,7 +12,12 @@ public class AOTAgentImpl {
 
     private static Instrumentation inst = null;
     // this defaults to false but for full AOT compatibility it should default to true
-    private static boolean retransform = false;
+    private static boolean retransform = true;
+    // this defaults to false for AOT compatibility
+    private static boolean hoist = false;
+    // we can only perform transformations for bootstrap classes
+    // when agent classes have been loaded by the bootstrap loader
+    protected static boolean IN_BOOTSTRAP = AOTAgentImpl.class.getClassLoader() == null;
 
     public static void premain(String args, Instrumentation inst) {
         AOTAgentImpl.inst = inst;
@@ -48,12 +55,18 @@ public class AOTAgentImpl {
         }
     }
 
-    /**
+/**
      *  Check whether any of the classes we want to transform are  already loaded
      *  and if so retransform them
      */
     private static void tryRetransform() {
-        // we only have one class to check and it will belong to the system loader
+        // class Thread will always be loaded so force a transform
+        try {
+            inst.retransformClasses(Thread.class);
+        } catch (UnmodifiableClassException e) {
+            throw new AOTAgentException("Unable to retransform already loaded class " + Thread.class.getName());
+        }
+        // we only have one other class to check and it will belong to the system loader
         for (Class<?> clazz : inst.getInitiatedClasses(ClassLoader.getSystemClassLoader())) {
             if (clazz.getName().equals("HelloAgent")) {
                 try {
