@@ -31,6 +31,15 @@ public class AOTAgentMain {
         AOTAgentImpl.agentmain(args, inst);
     }
 
+    /**
+     * Splice any "hoist" argument out of the command line options and return
+     * the remaining arguents or null
+     *
+     * @param args the arguments provided to the'-javaagent' command line option
+     *             after the target agent jar path.
+     * @return input args minus any embedded "hoist" argument and preceding/trailing ","
+     * separator or null if the only argument is "hoist".
+     */
     private static String checkHoist(String args) {
         if (args == null || args.equals("hoist")) {
             return null;
