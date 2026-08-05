@@ -1,17 +1,19 @@
 # Second Refinement of AOT-compatible Java Agent
 
-The Java agent now transforms both application and
-bootstrap classes. It is built as a single jar which
-is easily inserted into the bootstrap path as well
-as being passed as argument to the `-javaagent`
-command line option.
+The previous version of the Java agent transforms both
+application and bootstrap classes. It is built as a single
+jar which can easily be inserted into the bootstrap path as
+well as being passed as argument to the `-javaagent` command
+line option.
 
-Building and dpeloying as one jar is easy when the agent
-has no dependencies. However, in reality agents often rely
+Building and deploying that versions as one jar is easy because
+it has no dependencies. However, in reality agents often rely
 on library code. For example, agents commonly rely on ASM
 or ByteBuddy to perform  bytecode rewriting, letting them be
 used in JDK releases priot to JDK22 that do not include the
-`java.lang.classfile` bytecode manipulation API.
+`java.lang.classfile` bytecode manipulation API. Unfortunately,
+when an agent has library dependencies this complicates
+deployment of the agent.
 
 In theory, it is perfectly possible to configure the system
 or bootstrap classpaths to include the agent jar and
@@ -21,8 +23,8 @@ it is much easier for users to consume an agent if all the
 code, for the agent and all its dependencies, is bundled into
 a single jar.
 
-This version of the agent uses the ASM library to perform
-its bytecode transformations. The maven pom uses the maven
+The version of the agent in this branch uses the ASM library to
+perform its bytecode transformations. The pom uses the maven
 shade plugin to bundle all the required ASM 9.10.1 library
 classes into the agent jar, allowing the agent still to be
 consumed as a single, self-contained deliverable.
@@ -37,13 +39,17 @@ package (shading the transplanted packages from normal
 references, hence the name).
 
 Shading of embedded libraries is particularly important when
-an agent jar is inserted ito the bootstrap. In the current
-example the agent bundles ASM 9.10.1. If the agent were to
-be deployed unshaded into an app that relied on some other
-version of ASM then adding the agent to the bootstrap would
-mean that application references to ASM classes would be
-resolved against the bundled librray rather than the version
-included to the system classpath.
+an agent jar is inserted into the bootstrap. There is always
+the danger of the unshadd version interfering with operation
+of the application. In this current example the agent bundles
+ASM 9.10.1. If the agent were to be deployed unshaded into an
+app that relied on some other version of ASM then adding the
+agent to the bootstrap would mean that application references
+to ASM classes would be resolved against the bundled library
+rather than the version included to the system classpath.
+Depending on what has changed between the two versions this
+might lead to a crash or, perhaps worse, small, subtle changes
+in behaviour that are difficult to spot.
 
 ### Introduction
 This variant of the agent performs the same two transformations
@@ -63,12 +69,13 @@ HelloAgent.main()
 ```
 The main difference between this agent and its predecessor is
 that transformation is performed using an ASM class visitor
-rather than the JDK's own classfile bytecode transformer APIS.
+rather than the JDK's own classfile bytecode transformer APIs.
 
-The other difference is that the agent does not support the
+The other difference is that the agent omits both the
 "hoist" and "retransform" options. The user is expected to
 add the jar to the bootstrap path and the agent always checks
-to see if class `HelloAgent` has already been loaded.
+to see if class `HelloAgent` has already been loaded and
+retransforms it if it is present.
 
 ### Build
 The agent and application jars can be built using maven.
@@ -159,4 +166,4 @@ Total Thread.run count:        5
 As with the previous version of the agent it is not possible
 to configure it during the training run for the same reason
 as last time. Cache creation fails because this agent transforms
-class `java.lang.Thread`:
+class `java.lang.Thread`.
