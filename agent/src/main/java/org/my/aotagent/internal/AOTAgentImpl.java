@@ -11,22 +11,15 @@ import java.lang.instrument.UnmodifiableClassException;
 public class AOTAgentImpl {
 
     private static Instrumentation inst = null;
-    // this defaults to false but for full AOT compatibility it should default to true
-    private static boolean retransform = true;
-    // this defaults to false for AOT compatibility
-    private static boolean hoist = false;
     // we can only perform transformations for bootstrap classes
     // when agent classes have been loaded by the bootstrap loader
     protected static boolean IN_BOOTSTRAP = AOTAgentImpl.class.getClassLoader() == null;
 
     public static void premain(String args, Instrumentation inst) {
         AOTAgentImpl.inst = inst;
-        handleArgs(args);
         AOTAgentTransformer transformer = new AOTAgentTransformer();
         inst.addTransformer(transformer, true);
-        if (retransform) {
-            tryRetransform();
-        }
+        tryRetransform();
     }
 
     public static void agentmain(String args, Instrumentation inst) {
@@ -34,28 +27,6 @@ public class AOTAgentImpl {
     }
 
     /**
-     * Process any arguments provided to the -javaagent option.
-     * @param args a comma-separated sequence of arguments
-     */
-    private static void handleArgs(String args) {
-        if (args != null) {
-            String[] argsArray = args.split(",");
-            for (String arg : argsArray) {
-                switch (arg) {
-                    case "retransform":
-                        retransform = true;
-                        break;
-                    case "noretransform":
-                        retransform = false;
-                        break;
-                    default:
-                        throw new AOTAgentException("Unknown argument : " + arg);
-                }
-            }
-        }
-    }
-
-/**
      *  Check whether any of the classes we want to transform are  already loaded
      *  and if so retransform them
      */

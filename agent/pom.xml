@@ -35,6 +35,61 @@
                     </archive>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.6.1</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <artifactSet>
+                                <includes>
+                                    <include>org.ow2.asm:asm</include>
+                                    <include>org.ow2.asm:asm-tree</include>
+                                    <include>org.ow2.asm:asm-analysis</include>
+                                    <include>org.ow2.asm:asm-commons</include>
+                                </includes>
+                            </artifactSet>
+                            <filters>
+                                <filter>
+                                    <artifact>org.ow2.asm:asm</artifact>
+                                    <includes>
+                                        <include>org/objectweb/asm/**</include>
+                                    </includes>
+                                </filter>
+                                <filter>
+                                    <artifact>org.ow2.asm:asm-tree</artifact>
+                                    <includes>
+                                        <include>org/objectweb/asm/**</include>
+                                    </includes>
+                                </filter>
+                                <filter>
+                                    <artifact>org.ow2.asm:asm-analysis</artifact>
+                                    <includes>
+                                        <include>org/objectweb/asm/**</include>
+                                    </includes>
+                                </filter>
+                                <filter>
+                                    <artifact>org.ow2.asm:asm-commons</artifact>
+                                    <includes>
+                                        <include>org/objectweb/asm/**</include>
+                                    </includes>
+                                </filter>
+                            </filters>
+                            <relocations>
+                                <relocation>
+                                    <pattern>org.ow2.asm</pattern>
+                                    <shadedPattern>org.my.aotagent.shaded.org.objectweb.asm</shadedPattern>
+                                </relocation>
+                            </relocations>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
     <dependencies>
@@ -68,4 +123,68 @@
             <version>9.10.1</version>
         </dependency>
     </dependencies>
+    <profiles>
+      <profile>
+            <!-- profile which includes asm unshaded to allow debugging -->
+            <id>asmdebug</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-shade-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>shade</goal>
+                                </goals>
+                                <configuration>
+                                    <artifactSet>
+                                        <includes>
+                                            <include>org.ow2.asm:asm</include>
+                                            <include>org.ow2.asm:asm-tree</include>
+                                            <include>org.ow2.asm:asm-analysis</include>
+                                            <include>org.ow2.asm:asm-commons</include>
+                                        </includes>
+                                    </artifactSet>
+                                    <filters>
+                                        <filter>
+                                            <artifact>org.ow2.asm:asm</artifact>
+                                            <includes>
+                                                <include>org/objectweb/asm/**</include>
+                                            </includes>
+                                        </filter>
+                                        <filter>
+                                            <artifact>org.ow2.asm:asm-tree</artifact>
+                                            <includes>
+                                                <include>org/objectweb/asm/**</include>
+                                            </includes>
+                                        </filter>
+                                        <filter>
+                                            <artifact>org.ow2.asm:asm-analysis</artifact>
+                                            <includes>
+                                                <include>org/objectweb/asm/**</include>
+                                            </includes>
+                                        </filter>
+                                        <filter>
+                                            <artifact>org.ow2.asm:asm-commons</artifact>
+                                            <includes>
+                                                <include>org/objectweb/asm/**</include>
+                                            </includes>
+                                        </filter>
+                                    </filters>
+                                    <relocations>
+                                        <relocation>
+                                            <pattern>org.objectweb.asm</pattern>
+                                            <shadedPattern>org.objectweb.asm</shadedPattern>
+                                        </relocation>
+                                    </relocations>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

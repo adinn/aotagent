@@ -1,17 +1,14 @@
 package org.my.aotagent.internal;
 
 import org.my.aotagent.api.AOTAgentStatistics;
+import org.objectweb.asm.*;
 
-import java.lang.classfile.*;
-import java.lang.classfile.instruction.ReturnInstruction;
-import java.lang.constant.ClassDesc;
-import java.lang.constant.MethodTypeDesc;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.ClassFileTransformer;
-import java.lang.reflect.AccessFlag;
 import java.security.ProtectionDomain;
-
-import static java.lang.constant.ConstantDescs.CD_void;
 
 /**
  * A transformer that applies one simple transformations.
@@ -24,12 +21,10 @@ import static java.lang.constant.ConstantDescs.CD_void;
  */
 public class AOTAgentTransformer implements ClassFileTransformer {
     // constants needed to inject an INVOKE into HelloAgent.main
-    private final static String API_PACKAGE = AOTAgentStatistics.class.getPackageName();
-    private final static String API_CLASS_NAME = AOTAgentStatistics.class.getSimpleName();
-    private final static ClassDesc API_CLASS_DESC = ClassDesc.of(API_PACKAGE, API_CLASS_NAME);
+    private final static String API_CLASS_NAME = Type.getInternalName(AOTAgentStatistics.class);
     private final static String INCREMENT_RUN_COUNT_METHOD_NAME = "incrementRunCount";
     private final static String PRINT_STATS_METHOD_NAME = "print";
-    private final static MethodTypeDesc VOID_VOID_DESC = MethodTypeDesc.of(CD_void);
+    private final static String VOID_VOID_DESC = Type.getMethodDescriptor(Type.getType(void.class));
 
     public AOTAgentTransformer() {
     }
@@ -51,61 +46,98 @@ public class AOTAgentTransformer implements ClassFileTransformer {
         }
     }
     public byte[]  doHelloTransform(Module module, ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
-        // use JDK built-in class file transformer to print thread run stats
+        // use an ASM class visitor to print thread run stats
         // at the end of the main routine
-        ClassTransform classTransform = (classBuilder, classElement) -> {
-            if (classElement instanceof MethodModel method &&
-                    method.methodName().equalsString("main") &&
-                    method.flags().has(AccessFlag.PUBLIC) &&
-                    method.flags().has(AccessFlag.STATIC)) {
-                MethodModel methodModel = (MethodModel) classElement;
-                // transformer replaces return instructions with a call out to a static API method
-                CodeTransform codeTransform = (CodeBuilder codeBuilder, CodeElement codeElement) -> {
-                    if (codeElement instanceof ReturnInstruction) {
-                        // call out to API method to print run stats
-                        codeBuilder.invoke(Opcode.INVOKESTATIC, API_CLASS_DESC, PRINT_STATS_METHOD_NAME, VOID_VOID_DESC, false);
-                    }
-                    codeBuilder.with(codeElement);
-                };
-                // apply the transform to the method code
-                MethodTransform methodTransform = MethodTransform.transformingCode(codeTransform);
-                classBuilder.transformMethod(methodModel, methodTransform);
-            } else {
-                classBuilder.with(classElement);  // leaves the element in place
+        ClassReader cr = new ClassReader(classfileBuffer);
+        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS|ClassWriter.COMPUTE_FRAMES);
+        ClassVisitor cv = new ClassVisitor(Opcodes.ASM9, cw) {
+            @Override
+            public MethodVisitor visitMethod(
+                    final int access,
+                    final String name,
+                    final String descriptor,
+                    final String signature,
+                    final String[] exceptions) {
+                MethodVisitor mv = super.visitMethod(access, name, descriptor, signature, exceptions);
+                if (!name.equals("main") ||
+                        (access & Opcodes.ACC_PUBLIC)  == 0 ||
+                        (access & Opcodes.ACC_STATIC)  == 0) {
+                    return mv;
+                } else {
+                    return new MethodVisitor(Opcodes.ASM9, mv) {
+                        @Override
+                        public void visitInsn(final int opcode) {
+                            if (opcode == Opcodes.RETURN) {
+                                // print stats before returning
+                                visitMethodInsn(Opcodes.INVOKESTATIC, API_CLASS_NAME, PRINT_STATS_METHOD_NAME, VOID_VOID_DESC, false);
+                                mv.visitInsn(opcode);
+                            } else {
+                                mv.visitInsn(opcode);
+                            }
+                        }
+                    };
+                }
             }
         };
-        ClassFile cm = ClassFile.of();
-        return cm.transformClass(cm.parse(classfileBuffer), classTransform);
+        cr.accept(cv, ClassReader.EXPAND_FRAMES);
+        dumpBytes(className, cw.toByteArray());
+        return cw.toByteArray();
     }
 
     public byte[]  doThreadTransform(Module module, ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
         if (!AOTAgentImpl.IN_BOOTSTRAP) {
-            System.err.format("Unable to transform bootstrap class %s", classBeingRedefined.getName());
+            System.err.format("Unable to transform bootstrap class %s\n", classBeingRedefined.getName());
             return null;
         }
-        // use JDK built-in class file transformer to cont a successful exit
+        // use an ASM class visitor to count a successful exit
         // from Thread.run()
-        ClassTransform classTransform = (classBuilder, classElement) -> {
-            if (classElement instanceof MethodModel method &&
-                    method.methodName().equalsString("run") &&
-                    method.flags().has(AccessFlag.PUBLIC)) {
-                MethodModel methodModel = (MethodModel) classElement;
-                // transformer replaces return instructions with a call out to a static API method
-                CodeTransform codeTransform = (CodeBuilder codeBuilder, CodeElement codeElement) -> {
-                    if (codeElement instanceof ReturnInstruction) {
-                        // call out to API method which may throw an exception
-                        codeBuilder.invoke(Opcode.INVOKESTATIC, API_CLASS_DESC, INCREMENT_RUN_COUNT_METHOD_NAME, VOID_VOID_DESC, false);
-                    }
-                    codeBuilder.with(codeElement);
-                };
-                // apply the transform to the method code
-                MethodTransform methodTransform = MethodTransform.transformingCode(codeTransform);
-                classBuilder.transformMethod(methodModel, methodTransform);
-            } else {
-                classBuilder.with(classElement);  // leaves the element in place
+        ClassReader cr = new ClassReader(classfileBuffer);
+        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS|ClassWriter.COMPUTE_FRAMES);
+        ClassVisitor cv = new ClassVisitor(Opcodes.ASM9, cw) {
+            @Override
+            public MethodVisitor visitMethod(
+                    final int access,
+                    final String name,
+                    final String descriptor,
+                    final String signature,
+                    final String[] exceptions) {
+                MethodVisitor mv = super.visitMethod(access, name, descriptor, signature, exceptions);
+                if (!name.equals("run") || !descriptor.equals(VOID_VOID_DESC)) {
+                    return mv;
+                } else {
+                    return new MethodVisitor(Opcodes.ASM9, mv) {
+                        @Override
+                        public void visitInsn(final int opcode) {
+                            if (opcode == Opcodes.RETURN) {
+                                // ensure the agent counts a successful return
+                                visitMethodInsn(Opcodes.INVOKESTATIC, API_CLASS_NAME, INCREMENT_RUN_COUNT_METHOD_NAME, VOID_VOID_DESC, false);
+                                mv.visitInsn(opcode);
+                            } else {
+                                mv.visitInsn(opcode);
+                            }
+                        }
+                    };
+                }
             }
         };
-        ClassFile cm = ClassFile.of();
-        return cm.transformClass(cm.parse(classfileBuffer), classTransform);
+        cr.accept(cv, ClassReader.EXPAND_FRAMES);
+        dumpBytes(className, cw.toByteArray());
+        return cw.toByteArray();
+    }
+
+    private void dumpBytes(String className, byte[] bytes) {
+        StringBuilder b = new StringBuilder();
+        b.append("dump").append(File.separator);
+        b.append(className.replace('/', File.separatorChar)).append(".class");
+        try {
+            File filePath = new File(b.toString()).getAbsoluteFile();
+            File dirPath = filePath.getParentFile();
+            dirPath.mkdirs();
+            FileOutputStream fos = new FileOutputStream(filePath);
+            fos.write(bytes);
+            fos.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
