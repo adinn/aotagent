@@ -6,7 +6,7 @@ with use of an AOT cache.
 
 The project's main branch presents a simple agent that
 instruments code belonging to a small test application
-and shows how to create and AOT cache and deploy the
+and shows how to create an AOT cache and deploy the
 agent in a production run that uses the cache.
 
 More sophisticated versions of the agent, which implement
@@ -16,7 +16,7 @@ other branches of the project (listed and linked at the
 bottom of this file). The README files in those branches
 explain the additonal behaviour or structural benefits the
 variant agent offers and details the changes needed to
-build and deploy the agent compatibly with use of and AOT
+build and deploy the agent compatibly with use of an AOT
 cache.
 
 
