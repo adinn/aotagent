@@ -1,4 +1,4 @@
-# First Refinement of AOT-compatible Java Agent
+# Refinement 1: Enabling Instrumentation of Bootstrap Classes
 
 The simple Java agent only transforms application classes.
 However, agents commonly need to transform classes that
