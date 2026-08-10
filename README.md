@@ -1,4 +1,4 @@
-# Second Refinement of AOT-compatible Java Agent
+# Refinement 2: Bundling Library Code with the Agent
 
 The previous version of the Java agent transforms both
 application and bootstrap classes. It is built as a single
