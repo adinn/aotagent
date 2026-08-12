@@ -16,6 +16,10 @@ public class AOTAgentImpl {
     protected static boolean IN_BOOTSTRAP = AOTAgentImpl.class.getClassLoader() == null;
 
     public static void premain(String args, Instrumentation inst) {
+        ClassLoader loader = AOTAgentImpl.class.getClassLoader();
+        Module module = AOTAgentImpl.class.getModule();
+        System.out.format("AOTAgentImpl running in module %s\n", module.getName());
+        System.out.format("AOTAgentImpl classloader is %s\n", (loader == null ? "null" : loader.getName()));
         AOTAgentImpl.inst = inst;
         AOTAgentTransformer transformer = new AOTAgentTransformer();
         inst.addTransformer(transformer, true);

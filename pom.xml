@@ -16,6 +16,7 @@
 
     <modules>
         <module>agent</module>
+        <module>dummy-agent</module>
         <module>app</module>
     </modules>
     <build>

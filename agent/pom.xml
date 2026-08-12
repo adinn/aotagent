@@ -82,7 +82,7 @@
                             </filters>
                             <relocations>
                                 <relocation>
-                                    <pattern>org.ow2.asm</pattern>
+                                    <pattern>org.objectweb.asm</pattern>
                                     <shadedPattern>org.my.aotagent.shaded.org.objectweb.asm</shadedPattern>
                                 </relocation>
                             </relocations>
@@ -93,11 +93,6 @@
         </plugins>
     </build>
     <dependencies>
-        <dependency>
-            <groupId>org.my.aotagent</groupId>
-            <artifactId>aotagent-app</artifactId>
-            <version>${project.version}</version>
-        </dependency>
         <dependency>
             <groupId>org.ow2.asm</groupId>
             <artifactId>asm</artifactId>
