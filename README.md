@@ -305,8 +305,23 @@ be demonstrated with the next refinement of the agent.
 This is only a simple example that jumps over the
 most basic hurdle that gets in the way of deploying
 an agent with an AOT Cache. The repository contains
-several other variants of the agent which address
-issues that arise when the agent tries to do more
-complex things like instrumenting bootstrap classes.
+several other branches which refine the agent to address
+successively more complex requirements and document how
+each variant can be built and deployed:
 
-Details to follow
+1. [Instrumenting JDK bootstrap classes](https://github.com/adinn/aotagent/tree/refinement1)
+2. [Bundling library classes with the agent](https://github.com/adinn/aotagent/tree/refinement2)
+3. [Encapsulating agent code in a module](https://github.com/adinn/aotagent/tree/refinement3)
+
+Note that the third option of employing a modular agent
+jar, while highly desirable from the point of view of code
+integrity and security, is currently only achievable for
+agents that do not attempt to  transform JDK bootstrap
+classes (more precisely, they  must not perform transformations
+of JDK bootstrap classes which involve reference to classes
+that are not already in the bootstrap). While this restriction
+rules out many agents the exposition presented in the branch is
+still worth reading, both to explain the nature of the problem
+and also, should future JDK releases make it possible to resolve
+these issues, indicate how one might be able to use modular
+agents from the bootstrap module set along with an AOT cache. 
