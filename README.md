@@ -87,7 +87,7 @@ transformed.
 
 This is because option `-javagagent` only appends the agent jar to the
 system classpath. So, agent classes are only being loaded by the
-application classloader. Attempting to inject a call to
+application class loader. Attempting to inject a call to
 `AOTAgentStatstics.print()` into a method belonging to a bootstrap
 class will lead to a link resolution failure. The agent transformer is
 smart enough to detect which class loader is being used to load agent
