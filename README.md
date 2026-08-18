@@ -224,7 +224,7 @@ is included in the AOT cache.
 #### The alternative solution does not work
 With this version of the agent it is not possible to configure it
 during the training run. Cache creation fails because this agent 
-ransforms class `java.lang.Thread`:
+retransforms class `java.lang.Thread`:
 ```shell
 $ java -XX:AOTCacheOutput=HelloAgent.aot \
     --add-modules=java.instrument \
