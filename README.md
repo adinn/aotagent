@@ -68,7 +68,7 @@ Hello from AOT Agent
 ```
 #### Running the app with the AOT Agent
 Running with the agent requires adding the `-javaagent` option
-to the command line, pointing it at the agent at the jar
+to the command line, pointing it at the agent jar
 ```shell
 $ java -javaagent:agent/target/aotagent-agent-1.0-SNAPSHOT.jar \
     -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
