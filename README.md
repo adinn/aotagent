@@ -9,15 +9,15 @@ loader. This branch explains how to do that in a way
 that is compatible with use of an AOT cache.
 
 ### Introduction
-This variant of the agent modifies the implementation
-in the main branch to count successful calls to method
-`java.lang.Thread.run()` by transforming it to call method
-`AOTAgenStatistics.incrementRunCount()`. That change
-requires class `AOTAgenStatistics` to be loaded by the
-bootstrap loader, allowing the call to be successfully
-resolved.
 
-So, this time the Java agent instruments two methods
+This variant of the agent upgrades the implementation in the main
+branch to count successful calls to method `java.lang.Thread.run()`.
+It transforms `run` to call `AOTAgenStatistics.incrementRunCount()`
+just before returning. `java.lang.Thread` is a bootstrap class so this
+requires class `AOTAgenStatistics` to be loaded by the bootstrap
+loader, allowing the call to be successfully resolved.
+
+So, to summarise, this time the Java agent instruments two methods
 belonging to distinct classes:
 ```
 java.lang.Thread.run():
@@ -40,9 +40,8 @@ The second transformation locates any `RETURN` bytecode in
 `HelloAgent.main` and precedes it with a call to static
 method `print` of class `AOTAgentStatistics`.
 
-This effectively records each successful call to `Thread.run()`
-and prints a summary of the total number of calls when the app
-exits.
+This effectively records successful calls to `Thread.run()` and prints
+a summary of the total number of calls when the app exits.
 
 ### Build
 The agent and application jars can be built using maven.
@@ -50,6 +49,12 @@ The agent and application jars can be built using maven.
 mvn install
 ```
 ### Run
+
+As with the previous version, a JDK25+ Java release of OpenJDK is
+required in order to be able to deploy the agent with an AOT
+cache. However, the build and run instructions should still work on
+any JDK9+ Java release for runs that omit an AOT cache.
+
 ### Normal run
 The application is run by adding the app jar to the classpath
 and specifying  `HelloAgent` as the main class.
@@ -74,13 +79,16 @@ Hello from AOT Agent
 Hello from AOT Agent
 Total Thread.run count:        0
 ```
-The extra output shows that a call to `AOTAgentStatstics.print()`
-has been successfully injected into method `HelloAgent.main`
-just before it returns. However, it also shows that class thread
-has not been transformed. This is because `-javagagent` only appends
-the agent jar to the system classpath. So, agent classes are only being
-loaded by the system clasloader. Attempting to inject a call to
-`AOTAgentStatstics.print()`  into a method belonging to a bootstrap
+
+The extra output shows that a call to `AOTAgentStatstics.print()` has
+been successfully injected into method `HelloAgent.main` just before
+it returns. However, it also shows that class thread has not been
+transformed.
+
+This is because option `-javagagent` only appends the agent jar to the
+system classpath. So, agent classes are only being loaded by the
+system clasloader. Attempting to inject a call to
+`AOTAgentStatstics.print()` into a method belonging to a bootstrap
 class will lead to a link resolution failure.
 
 The usual way agents fix this is by locating the agent jar during
@@ -90,10 +98,12 @@ classpath. This must be done in the agent's premain entry routine
 in order to ensure that all subsequent loading of agent classes finds
 them using the bootstrap loader rather than the system loader.
 
-Luckily, this version of the agent accepts a "hoist" command which
-hoists the agent jar as required. The relevant code is in class
-`AOTAgentMain` which provides the agent `premain` method referenced
-from the agent jar's manifest file.
+By another lucky coincidence (!), this version of the agent accepts a
+"hoist" command which hoists the agent jar as required. The relevant
+code can be observed in class `AOTAgentMain` which provides the agent
+`premain` method that is referenced from the agent jar's manifest
+file.
+
 ```shell
 `$ java -javaagent:agent/target/aotagent-agent-1.0-SNAPSHOT.jar=hoist \
     -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
@@ -105,7 +115,13 @@ Hello from AOT Agent
 Hello from AOT Agent
 Total Thread.run count:        5
 ````
+
 ### Running the app with an AOT cache and the AOT agent
+
+It is possible to use this agent with an AOT cache when deploying into
+the system classpath. However, as shown below, use of the `hoist`
+option invalidates the cache.
+
 ### Creating an agent compatible AOT Cache
 As with the previous version of the agent, building an AOT cache
 for use with the agent requires module `java.instrument` to be
@@ -149,7 +165,13 @@ invalidating assumptions about linkage used when building the
 AOT cache. Once again the JVM drops the cache in order to guarantee
 correctness over performance. The agent still gets to do its job but
 the application fails to benefit from using an AOT cache.
+
+If instead we dropped the `hoist` option the cache would still be
+useable but the agent would not be able to modify class `Thread`,
+meaning that the run count would always be zero.
+
 ### Creating an AOT-cache compatible Java agent
+
 The resolution for this problem is to ensure that module `java.instrument`
 and the agent jar are both included in the bootstrap path during assembly
 and production without relying on the agent 'hoist'. That doesn't imply
@@ -201,14 +223,13 @@ of the agent to install the agent jar into the bootstrap in production.
 This fails because agent initialization happens after the JVM starts
 using the cache i.e. too late to fix up the bootstrap classpath:
 ```shell
-$ java -XX:AOTCacheOutput=HelloAgent.aot \
-    -Xbootclasspath/a:agent/target/aotagent-agent-1.0-SNAPSHOT.jar \
+$  java -XX:AOTCache=HelloAgent.aot \
    -javaagent:agent/target/aotagent-agent-1.0-SNAPSHOT.jar=hoist,retransform \
     -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
-[0.015s][warning][aot] boot classpath has fewer elements than expected
-[0.015s][error  ][aot] An error has occurred while processing the AOT cache. Run with -Xlog:aot for details.
-[0.015s][error  ][aot] shared class paths mismatch (hint: enable -Xlog:class+path=info to diagnose the failure)
-[0.015s][error  ][aot] Unable to map shared spaces
+[0.006s][warning][aot] boot classpath has fewer elements than expected
+[0.006s][error  ][aot] An error has occurred while processing the AOT cache. Run with -Xlog:aot for details.
+[0.006s][error  ][aot] shared class paths mismatch (hint: enable -Xlog:class+path=info to diagnose the failure)
+[0.007s][error  ][aot] Unable to map shared spaces
 Hello from AOT Agent
 Hello from AOT Agent
 Hello from AOT Agent
@@ -221,7 +242,11 @@ With this version of the agent it is not possible to configure it
 during the training run. Cache creation fails because this agent 
 ransforms class `java.lang.Thread`:
 ```shell
-$ java -XX:AOTCacheOutput=HelloAgent.aot  --add-modules=java.instrument  -Xbootclasspath/a:agent/target/aotagent-agent-1.0-SNAPSHOT.jar  -javaagent:agent/target/aotagent-agent-1.0-SNAPSHOT.jar  -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
+$ java -XX:AOTCacheOutput=HelloAgent.aot \
+    --add-modules=java.instrument \
+    -Xbootclasspath/a:agent/target/aotagent-agent-1.0-SNAPSHOT.jar \
+    -javaagent:agent/target/aotagent-agent-1.0-SNAPSHOT.jar \
+    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
 [0.728s][warning][aot] Skipping java/lang/Thread: From ClassFileLoadHook
 [0.863s][warning][aot] Skipping HelloAgent: From ClassFileLoadHook
 Hello from AOT Agent
@@ -241,10 +266,12 @@ Total Thread.run count:        5
 [1.493s][error  ][aot] An error has occurred while writing the shared archive file.
 [1.493s][error  ][aot] Critical class java.lang.Thread has been excluded. AOT configuration file cannot be written.
 ```
-The usual warnings are printed to record exclusion of the two classes
-that have been transformed. We then see some extra warnings for
-subclasses of `Thread` that are also excluded because they are derived
-from an excluded class. Then we hit the error that blocks cache creation.
+
+The usual warnings are printed to record exclusion from the training
+set of the two classes that have been directly transformed, `Thread`
+and `HelloAgent`. We also see some extra warnings for subclasses of
+`Thread` that are also excluded because they are derived from an
+excluded class. Then we hit the error that blocks cache creation.
 
 Class `Thread` belongs to a core set of 'well-known' classes that are
 specially handled by the JVM during early start-up of the JDK runtime.
