@@ -6,8 +6,9 @@ with use of an AOT cache.
 
 The project's main branch presents a simple agent that
 instruments code belonging to a small test application
-and shows how to create an AOT cache and deploy the
-agent in a production run that uses the cache.
+and shows how to create an AOT cache for the application
+and deploy the agent in a production run that uses the
+cache.
 
 More sophisticated versions of the agent, which implement
 features agent writers often need to employ or exemplify
