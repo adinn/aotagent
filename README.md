@@ -221,25 +221,6 @@ run as it is implied by passing `-javaagent`. The `retransform` option
 still needs to be passed as an agent argument because class `HelloAgent`
 is included in the AOT cache.
 
-It is worth noting that it is not possible to rely on the `hoist` capability
-of the agent to install the agent jar into the bootstrap in production.
-This fails because agent initialization happens after the JVM starts
-using the cache i.e. too late to fix up the bootstrap classpath:
-```shell
-$  java -XX:AOTCache=HelloAgent.aot \
-   -javaagent:agent/target/aotagent-agent-1.0-SNAPSHOT.jar=hoist,retransform \
-    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
-[0.006s][warning][aot] boot classpath has fewer elements than expected
-[0.006s][error  ][aot] An error has occurred while processing the AOT cache. Run with -Xlog:aot for details.
-[0.006s][error  ][aot] shared class paths mismatch (hint: enable -Xlog:class+path=info to diagnose the failure)
-[0.007s][error  ][aot] Unable to map shared spaces
-Hello from AOT Agent
-Hello from AOT Agent
-Hello from AOT Agent
-Hello from AOT Agent
-Hello from AOT Agent
-Total Thread.run count:        5
-```
 #### The alternative solution does not work
 With this version of the agent it is not possible to configure it
 during the training run. Cache creation fails because this agent 
