@@ -21,7 +21,7 @@ cache.
 
 
 ### Introduction
-This simple versions of the agent performs one instrumentation
+This simple version of the agent performs one instrumentation
 to method `HelloAgent.main()`.
 ```
 HelloAgent.main():
@@ -30,19 +30,30 @@ HelloAgent.main():
    . . .         RETURN
                  . . .  
 ```
-The transformation locates any `RETURN` bytecode in the main
-and precedes it with a call to the static `print` method of
-class `AOTAgentStatistics`.
+The transformation locates any `RETURN` bytecode in the app's
+main method and precedes it with a call to the static `print`
+method of class `AOTAgentStatistics`.
 
 Note that in this simple version of the agent stats are not
-being collected so the print method reports no results.
+being collected so the print method reports no useful results.
 
 ### Build
-The agent and application jars can be built using maven.
+The agent and application jars can be built using Maven.
 ```
 mvn install
 ```
+The Maven build should work using any JDK9+ Java release.
+
 ### Run
+A JDK25+ Java release of OpenJDK is required in order to be
+able to deploy the agent with an AOT cache (AOT caching is
+not supported in earlier JDK releases). However, the agent
+and app jars should both build and run the same on any JDK9+
+Java release when run without an AOT cache. In other words,
+the recommended command line modifications that enable use
+of an AOT cache should not cause a problem when switching
+from a JDK25+ release to an earlier release.
+
 ### Normal run
 The application is run by adding the app jar to the classpath
 and specifying  `HelloAgent` as the main class.
@@ -56,7 +67,8 @@ Hello from AOT Agent
 ```
 #### Running the app with the AOT Agent
 Running with the agent requires adding the `-javaagent` option
-to the command line, pointing it at the agent at the jar
+to the command line, pointing it at the agent jar. The app jar
+also needs to be included in the classpath.
 ```shell
 $ java -javaagent:agent/target/aotagent-agent-1.0-SNAPSHOT.jar \
     -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
@@ -72,7 +84,7 @@ has been successfully injected into method `HelloAgent.main`
 just before it returns.
 #### Running the app with an AOT cache
 An AOT cache can be created by running the program as normal
-except for the addition of the AOTCacheOutput command line
+except for the addition of the `AOTCacheOutput` command line
 argument
 ```shell
 $ java -XX:AOTCacheOutput=HelloAgent.aot \
@@ -89,7 +101,7 @@ Reading AOTConfiguration HelloAgent.aot.config and writing AOTCache HelloAgent.a
 AOTCache creation is complete: HelloAgent.aot 10936320 bytes
 Removed temporary AOT configuration file HelloAgent.aot.config
 ```
-The cache can then be used by rerunning with option AOTCache
+The cache can then be used by rerunning with option `AOTCache`
 specifying the same target for the AOT cache file
 ```shell
 $ java -XX:AOTCache=HelloAgent.aot \
@@ -136,23 +148,25 @@ advice given and run the java command with extra argument
 the above brief report.
 
 Configuring option `-javaagent` on the command requires the JVM
-to add optional module `java.instrument` to the default set of
-modules in the `java.se` module suite. That's enough to make
-the AOT cache invalid -- or at least some parts of it. The
-pre-calculated module graph that was stored in the cache is no
-longer correct.
+to add optional module `java.instrument` to the set of configured
+modules. That's enough to make the AOT cache invalid -- or at the
+very least some parts of it. The pre-calculated module graph that
+was stored in the cache is based on a configuration that omits
+`java.instrument`. So, even in the best case the production run
+must drop the cached module graph and recalculate it.
 
-However, there is actually a bigger problem. Changing the set of
-classes which lie in the bootstrap can result in a change to the
-visibility and linking of classes in the system classpath. Although
-this is very unlikely to happen it does mean that the class
-metadata pre-installed and pre-linked in the AOT cache might have
-been constructed using a link order that is inconsistent with the
-linkage that is supposed to occur in the current runtime. In order
-to avoid this possibilty the JVM rejects use of the cache,
-prioritizing correctness before performance.
+However, this is merely one part of a bigger problem. Any change to
+the modules and classes that lie in the bootstrap classpath can have
+a knock-on effect to the visibility and linking of classes in the
+system classpath. Although this is very unlikely to happen it does
+mean that the class metadata pre-installed and pre-linked in the
+AOT cache might have been constructed using a link order that is
+inconsistent with the linkage that has been congigured in the
+production runtime. In order to avoid this possibilty the JVM
+rejects the whole AOT cache, prioritizing correctness over
+performance.
 
-#### Creating an agent compatible AOT cache
+#### Creating an agent-compatible AOT cache
 The solution is to ensure that module `java.instrument` is included
 in the module graph when the cache is built.
 ```shell
@@ -186,7 +200,7 @@ Hello from AOT Agent
 Hello from AOT Agent
 Hello from AOT Agent
 ```
-This gets rid fo the warning that the cache is not usable.
+This gets rid of the warning that the cache is not usable.
 Unfortunately, there is still one small issue which is stopping
 the agent doing its job properly. This can be seen in the output
 above where it is clear that `AOTAgentStatistics.print()` has
@@ -199,22 +213,23 @@ during a production run `HelloAgent` is effectively 'pre-loaded'
 by the System class loader before agent's transformer gets
 installed. The cache provides the JVM with pre-computed metadata
 for class `HelloAgent`, bypassing the need to load and process
-the class's bytecode. So, loading of class `HelloAgent` has
-'already happened' and there is no triggering of the
-`ClassFileLoadHook` event for `HelloAgent` that would normally
-drive entry into the `transform` method of the agent's
-`ClassFleTransformer`.
+the class's bytecode.
 
-That doesn't mean the agent gets no chance to transform the class.
-The resolution is for the agent to check the loaded class list
-immediately after it has installed its transformer, looking for
-any classes that it wants to transform and explicitly scheduling
+So, in effect, loading of class `HelloAgent` has 'already happened'
+and there is no triggering of the `ClassFileLoadHook` event for
+`HelloAgent` that would normally drive entry into the `transform`
+method of the agent's `ClassFleTransformer`.
+
+That doesn't mean the agent is denied a chance to transform the
+class. The resolution is for the agent to check the loaded class
+list immediately after it has installed its transformer, looking
+for any classes that it wants to transform and explicitly scheduling
 transformation via method `Instrumentation.redefineClasses()`.
 
 By a lucky coincidence (!), the example agent provides an option
 to do just that. Appending agent argument `"retransform"` to the
-`-javaagent` command line option requests the agent to redefine
-any target classes that it finds already loaded.
+`-javaagent` option's argument string requests the agent to
+redefine any target classes that it finds already loaded.
 
 ```shell
 java -XX:AOTCache=HelloAgent.aot \
@@ -228,23 +243,29 @@ Hello from AOT Agent
 No agent statistics to report
 ```
 
-Note that the fact that the redefined class (`HelloAgent`) is
-already loaded means that a transformer may not change the visible
-'shape' of the class. A transformer cannot rely on catching classes
-at first load in order to change their shape if they may potentially
-have been included in the AOT cache which, by and large, means any
-class in the bootstrap or system classpath that was loaded during
-training. Ideally a transformer should restrict itself to updating
-method bytecode, i.e. behavioural changes, if it needs to be used with
-an AOT cache. If not it may fail with an `UnmodifiableClassException`.
+Note that the fact that the redefined class (`HelloAgent`) is already
+loaded means that a transformer may not change the visible 'shape' of
+the class. Many agent transformers rely on being loaded early, before
+the apphas started, in order to catch classes at first load and change
+their shape i.e. add fields, change their super or implemented
+interfaces, add or remove methods etc.
+
+This is no longer something which can be guaranteed for app classes
+since they may potentially be included in the AOT cache. With a few
+exceptions that will apply for any class that was loaded by the
+bootstrap or system classpath during the training run. Cached classes
+must be treated as having been loaded before the agent, just like with
+many JDK classes. Ideally a transformer should restrict itself to
+updating method bytecode, i.e. behavioural changes, when it needs to
+be used with an AOT cache. If not then it has to be be aware that a
+transformation may fail with an `UnmodifiableClassException`.
 
 #### An alternative solution that may or may not work
 In some cases it may be possible to configure an agent during the
-training run. Whether this is possible depends on  what classes the
-agent actually transforms. With the simple agent provided here there
-is nothing to stop the agent being used during training (more complex
-variants of the agent will provide more details as to what does and
-does not work).
+training run as well as in production. Whether this is possible
+depends on what classes the agent actually transforms. With the simple
+agent provided here there is nothing to stop the agent being used
+during training.
 ```shell
 $ java -XX:AOTCacheOutput=HelloAgent.aot \
     -javaagent:agent/target/aotagent-agent-1.0-SNAPSHOT.jar \
@@ -268,16 +289,19 @@ Reading AOTConfiguration HelloAgent.aot.config and writing AOTCache HelloAgent.a
 AOTCache creation is complete: HelloAgent.aot 12095488 bytes
 Removed temporary AOT configuration file HelloAgent.aot.config
 ```
-Note that this resolves both the issues encountered above. Firstly,
-the AOT cache build process excludes class `HelloAgent` from
-the cache because it was transformed during the training run
-(the bytes used during training are recognzied as having been
-modified under the `ClassFileLoadHook`). Also excluded are classes
-loaded from the agent jar (`Unsupported location`). 
 
-Secondly, adding the agent to the command line during training
-avoids the need to include module `java.instrument` on the command
-line. The module is automatically added leading to the same
+Note that as a side-effect of training with the agent configured both
+the issues encountered above are bypassed. Firstly, the AOT cache
+build process excludes class `HelloAgent` from the cache because it
+was transformed during the training run (the bytes used during
+training are recognized as having been modified under the
+`ClassFileLoadHook`). Also excluded are classes loaded from the agent
+jar (`Unsupported location`).
+
+Secondly, adding the agent to the command line during training avoids
+the need to include module `java.instrument` on the command line. The
+module is automatically added to the confiuration when the
+`-javaagent` option is passed on the command line, leading to the same
 configuration for the training and production runs.
 
 ```shell
@@ -291,37 +315,39 @@ Hello from AOT Agent
 Hello from AOT Agent
 No agent statistics to report
 ```
-Since the main class `HelloAgent` has been excluded from the AOT
-cache it gets loaded as normal after the agent transformer has
-been installed. So, there is no need to pass the retransform option
-to the agent in this case.
 
-Although this looks like an easier option note that it is not
-always possible to configure an agent indurign trainng as will
-be demonstrated with the next refinement of the agent.
+Since the main class `HelloAgent` has been excluded from the AOT cache
+it gets loaded as normal after the agent transformer has been
+installed. So, there is no need to pass the `retransform` option to
+the agent in this case.
+
+Although this looks like an easier way to configure the command line
+for AOT cache creation note that it is not always possible to
+configure an agent during training. This will be demonstrated and
+explained when considering the next refinement of the agent.
 
 ### Further refinements
 
-This is only a simple example that jumps over the
-most basic hurdle that gets in the way of deploying
-an agent with an AOT Cache. The repository contains
-several other branches which refine the agent to address
-successively more complex requirements and document how
-each variant can be built and deployed:
+This main provides only the simplest example agent that jumps over the
+most basic hurdles that get in the way of deploying the agent with an
+AOT Cache. The repository contains several other branches which refine
+the agent implementation to address successively more complex
+requirements, documenting how each variant needs to be built and
+deployed:
 
 1. [Instrumenting JDK bootstrap classes](https://github.com/adinn/aotagent/tree/refinement1)
 2. [Bundling library classes with the agent](https://github.com/adinn/aotagent/tree/refinement2)
 3. [Encapsulating agent code in a module](https://github.com/adinn/aotagent/tree/refinement3)
 
-Note that the third option of employing a modular agent
-jar, while highly desirable from the point of view of code
-integrity and security, is currently only achievable for
-agents that do not attempt to  transform JDK bootstrap
-classes (more precisely, they  must not perform transformations
-of JDK bootstrap classes which involve reference to classes
-that are not already in the bootstrap). While this restriction
-rules out many agents the exposition presented in the branch is
-still worth reading, both to explain the nature of the problem
-and also, should future JDK releases make it possible to resolve
-these issues, indicate how one might be able to use modular
-agents from the bootstrap module set along with an AOT cache. 
+Note that the third option of employing a modular agent jar, while
+highly desirable from the point of view of code integrity and
+security, is currently only achievable for agents that do not attempt
+to transform JDK bootstrap classes (more precisely, they must not
+perform transformations of JDK bootstrap classes which involve
+reference to classes that are not already in the bootstrap). While
+this restriction rules out most useful agents, the exposition
+presented in the branch is still worth reading. As well as explaining
+the nature of the problems involved, it also provides an indication of
+indicate how one might in future deploy a modular agent in the
+bootstrap module set alongside an AOT cache, assuming newer JDK
+releases make it possible to resolve these issues.
