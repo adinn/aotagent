@@ -51,9 +51,13 @@ mvn install
 ### Run
 
 As with the previous version, a JDK25+ Java release of OpenJDK is
-required in order to be able to deploy the agent with an AOT
-cache. However, the build and run instructions should still work on
-any JDK9+ Java release for runs that omit an AOT cache.
+required in order to be able to deploy the agent with an AOT cache and
+to use the JDK-internal classfile API. However, the advice given here
+will also apply for agents and apps that can be compiled using earlier
+releases, going back to JDK9, when they run without an AOT cache. In
+other words, the recommended command line modifications that enable
+use of an AOT cache should not cause a problem when switching from a
+JDK25+ release to an earlier release.
 
 ### Normal run
 The application is run by adding the app jar to the classpath
