@@ -112,7 +112,7 @@ code can be observed in class `AOTAgentMain` which provides the agent
 file.
 
 ```shell
-`$ java -javaagent:agent/target/aotagent-agent-1.0-SNAPSHOT.jar=hoist \
+$ java -javaagent:agent/target/aotagent-agent-1.0-SNAPSHOT.jar=hoist \
     -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
 OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
 Hello from AOT Agent
