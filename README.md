@@ -363,7 +363,8 @@ Picked up JAVA_TOOL_OPTIONS: -Djava.class.path=app/target/aotagent-app-1.0-SNAPS
 Reading AOTConfiguration HelloAgent.aot.config and writing AOTCache HelloAgent.aot
 AOTCache creation is complete: HelloAgent.aot 11358208 bytes
 Removed temporary AOT configuration file HelloAgent.aot.config
-``
+```
+
 #### Running the app using the AOT cache and deploying he AOT agent as a classpath module
 The agent can now be deployed with this cache in
 production using the saem command lne optiosn as
