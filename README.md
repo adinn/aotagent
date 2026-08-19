@@ -1,4 +1,4 @@
-# Refinement 3: Shipping as a Module
+# Refinement 3: Shipping the Java agent as a Module
 
 The previous version of the Java agent solves several
 common problems faced by agent developers while still
@@ -7,32 +7,32 @@ transforms both application and bootstrap classes. It
 simplifies deployment by bundling its dependencies (the
 ASM library) into the agent jar. Lastly, it avoids
 conflicts with overlapping application dependencies by
-shading bundled libraries' classes into its own, unique
+shading bundled library classes into its own, unique
 package space. However, that still leaves one packaging
 issue that could be improved on.
 
 The agent code is neatly factored into three packages.
-The first two are API packages: `org.my.aotagrent.api`
+The first two are API packages: `org.my.aotagent.api`
 contains all agent classes and methods referenced from
-code injected by the agent; `org.my.aotagrent.main`
+code injected by the agent; `org.my.aotagent.main`
 contains the agent entry class specified in the agent
 jar's manifest.
 
-The third package, `org.my.aotagrent.internal` contains
-the agent implementation. Strictly, this code should be
-private, invisible to other bootstrap code not provided
-by the agent and also to classes loaded via the classpath.
-At the very least this is a question of code  hygiene,
-ensuring clients do not mistakenly use internal  classes.
-A more important reason to hide the implementation
-is that the `Instrumentation` instance passed to the agent
-entry class's `premain` and `agentmain` methods is stored
-in a static field of class `AOTAgentImpl`. That leaves it
-accessible to any application class via reflection. Access
-to an `Instrumentation` object grants clients the ability to
-perform many operations that can subvert normal JVM and
-application behaviour, making it easier for malicious code to
-escalate a minor security exploit to a much more sophisticated
+The third package, `org.my.aotagent.internal` contains the agent
+implementation. Strictly, this code should be private, invisible to
+other bootstrap and app modules and also to classes loaded via the
+classpath.
+
+At the very least this is a question of code hygiene, ensuring clients
+do not mistakenly use internal classes. A more important reason to
+hide the implementation is that the `Instrumentation` instance passed
+to the agent entry class's `premain` and `agentmain` methods is stored
+in a static field of class `AOTAgentImpl`. That leaves it accessible
+to any application class via reflection. Access to an
+`Instrumentation` object grants clients the ability to perform many
+operations that can subvert normal JVM and application behaviour.
+leaving it open to reflective access makes it easier for malicious
+code to escalate a minor security exploit to a much more sophisticated
 and dangerous exploit.
 
 A nice way to avoid this security issue is to package the jar
@@ -42,6 +42,8 @@ for the simple agent we started with (the one in the main
 beanch) that has no dependencies and only transforms application
 classes.
 
+### Issues with building and deploying as a module
+
 Building the agent jar as a module can be achieved simply by
 including a `module-info.java` at the root of the source tree
 and configuring it to export the `api` and `main` packages.
@@ -50,39 +52,51 @@ path using command line option `--modulepath` and adding the
 agent module into the JVM's module set using command line  option
 `--add-module`.
 
-However, when the agent needs to bundle library dependencies
-as is the case with this version then that approach will not
-work without some changes to the building and packaging steps
-used to produce the agent jar. Resolving this issue requires
-working around some limitations of the maven/javac build process.
+Deploying the modular jar as both a module and a javaagent
+requires all the above steps plus i) including a `MANIFEST.MF`
+file in the jar that identifies the relevant agent premain
+class and ii) configuring the `-javaagent` option on the
+command line to point to the same jar as was added to the
+module path. The OpenJDK JVM does currently allows a jar to
+operate as both a module and a javagent jar, although there
+is nothing in the specifications to say that this has to
+work.
 
-A further problem is that the agent cannot be deployed as a
-module and transform bootstrap classes. Of course, it is still
+Unfortunately, when the agent needs to bundle library
+dependencies, as is the case with this version, then that
+approach will not work without some changes to the building
+and packaging steps used to produce the agent jar. Resolving this
+issue requires working around some limitations of the maven/javac
+build process and the details are provided below.
+
+A more serious problem is that the agent cannot be deployed as
+a module and transform bootstrap classes. Of course, it is still
 possible to insert the modular agent jar into the bootstrap
 classpath, allowing it to inject references to its own classes
 into bootstrap code. However, the JVM will not then add the jar
 into the list of bootstrap modules, nor even treat the jar as a
 module.
 
-Combining option `-Xbootclasspath/a` with the other command
-line options that configure modules, `--add-modules`,`--module-path`
-and `--upgrade-module-path`, wil not remedy this problem. The
-issue is that set of bootstrap modules is fixed during the JVM
-build process and cannot be modified at runtime. It might be
-possible to loosen this constraint in future JVMs, allowing
-modular aent jars to be deployed into the bootstrap classpath
-as modules. However, that option is not currently in the roadmap
-for the Java platform module system.
+Combining option `-Xbootclasspath/a` with the other command line
+options that configure modules, `--add-modules`,`--module-path` and
+`--upgrade-module-path`, will not remedy this problem. The root issue
+is that set of bootstrap modules is fixed during the JVM build process
+and cannot be modified at runtime. It might be possible to loosen this
+constraint in future JVMs, allowing modular agent jars to be deployed
+into the bootstrap classpath as modules. However, that option is not
+currently in the roadmap for the Java platform module system and it
+will not help when agents are deployed on existing releases
 
-These difficulties are explained below using this version of the
-module to show the relevant configruation options and associated
-JVM behaviour. The module code is not significantly changed.
-The main difference is that the main implementation class prints
-details of its classloader and module. The source tree also includes
-a new directory implementing a dummy version of the desired module.
-However, the build process is quite different, requiring some manual
-intervention to address the operations that are not covered  by the
-normal maven build process and normal JVM command line  deployment
+These difficulties are explained in more detail below using this
+version of the module to show the relevant configruation options and
+associated JVM behaviour. The agent source code is not significantly
+changed. The main difference is that the main implementation class
+prints details of its classloader and module in order to clarify which
+classloader and mdoule the agent code belong to. The source tree also
+includes a new directory implementing a dummy version of the desired
+module. However, the build process is quite different, requiring some
+manual intervention to address the operations that are not covered by
+the normal maven build process and normal JVM command line deployment
 options.
 
 ### How to package the shaded agent jar as a module jar 
@@ -117,23 +131,23 @@ the library package classes are split across the module and the
 classpath.
 
 So, it seems that packaging the agent as a module cannot be achieved
-as with the previous version i.e. by simply compiling the agent
-code with library dependency jars on the compiler classpath and
-then shading the required library classes into the agent jar.
-However, it is clear that the previous jar contains all the code
-needed for the agent to operate, that the deployed jar would benefit
-from module packaging to hide all the implementation and shaded code
-and that none of this extra, shaded content to infringes any module
+as with the previous version i.e. by simply compiling the agent code
+with library dependency jars on the compiler classpath and then
+shading the required library classes into the agent jar.  However, it
+is clear that the jar as previously built contains all the code needed
+for the agent to operate, that the deployed jar would benefit from
+module packaging to hide all the implementation and shaded code and
+that none of this extra, shaded content to infringes any module
 restrictions.
 
 These problems are easily finessed by a) building a dummy, throwaway
-modular jar that includes a `module-info.class` file with the
-relevant name, imports and exports and b) merging that file into the
-previously built shaded jar. This version of the agent code provides
-a dummy agent source tree in subdirectory `dummy-agent`. It
-contains the desired `module-info.java` source plus two dummy
-classes which serve to populate the exported packages -- a
-requirement for the maven compiler plugin to play ball.
+modular jar that includes a `module-info.class` file with the relevant
+name, imports and exports and b) merging that one file into the
+previously built shaded jar. This version of the agent code provides a
+dummy agent source tree in subdirectory `dummy-agent`. It contains the
+desired `module-info.java` source plus two dummy classes which serve
+to populate the exported packages -- a requirement for the maven
+compiler plugin to play ball.
 
 ### Build
 Running `mvn install` builds the agent and app jar products plus
