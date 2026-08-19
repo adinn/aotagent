@@ -339,7 +339,7 @@ Hello from AOT Agent
 Hello from AOT Agent
 Total Thread.run count:        0
 ```
-### Running the app with an AOT cache and the modular AOT agent deployed as non-modular bootstrap jar
+### Running the app with an AOT cache and the modular AOT agent deployed as a non-modular bootstrap jar
 ### Creating an agent compatible AOT Cache
 It is still possible to create an agent compatible cache when
 the agent is packaged as a modular jar. It requires the saem
@@ -365,10 +365,12 @@ AOTCache creation is complete: HelloAgent.aot 11358208 bytes
 Removed temporary AOT configuration file HelloAgent.aot.config
 ```
 
-#### Running the app using the AOT cache and deploying he AOT agent as a classpath module
-The agent can now be deployed with this cache in
-production using the saem command lne optiosn as
-were required when using a non-modular jar:
+#### Running the app using the AOT cache and deploying the AOT agent as a non-modular bootstrap jar
+
+The agent can now be deployed with this cache in production using the
+same command lne options as were required when using a non-modular
+jar:
+
 ```shell
 $ java -XX:AOTCache=HelloAgent.aot \
     --add-modules=java.instrument \
@@ -384,3 +386,7 @@ Hello from AOT Agent
 Hello from AOT Agent
 Total Thread.run count:        5
 ```
+
+The modular jar still works as an agent jar with agent classes loaded
+by the bootstrap loader. However, the agent jar is not being treated
+as a module.
