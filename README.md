@@ -84,7 +84,7 @@ Hello from AOT Agent
 Total Thread.run count:        0
 ```
 
-The extra output shows that a call to `AOTAgentStatstics.print()` has
+The extra output shows that a call to `AOTAgentStatistics.print()` has
 been successfully injected into method `HelloAgent.main` just before
 it returns. However, it also shows that class thread has not been
 transformed.
@@ -92,7 +92,7 @@ transformed.
 This is because option `-javagagent` only appends the agent jar to the
 system classpath. So, agent classes are only being loaded by the
 application class loader. Attempting to inject a call to
-`AOTAgentStatstics.print()` into a method belonging to a bootstrap
+`AOTAgentStatistics.print()` into a method belonging to a bootstrap
 class will lead to a link resolution failure. The agent transformer is
 smart enough to detect which class loader is being used to load agent
 classes and only inject the call into class `Thread` when it can be
@@ -121,7 +121,7 @@ Hello from AOT Agent
 Hello from AOT Agent
 Hello from AOT Agent
 Total Thread.run count:        5
-````
+```
 
 ### Running the app with an AOT cache and the AOT agent
 
