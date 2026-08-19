@@ -6,11 +6,11 @@ jar which can easily be inserted into the bootstrap path as
 well as being passed as argument to the `-javaagent` command
 line option.
 
-Building and deploying that versions as one jar is easy because
-it has no dependencies. However, in reality agents often rely
-on library code. For example, agents commonly rely on ASM
-or ByteBuddy to perform  bytecode rewriting, letting them be
-used in JDK releases priot to JDK22 that do not include the
+Building and deploying that previous version as one jar was easy
+because it has no dependencies. However, in reality agents often
+rely on library code. For example, agents commonly use ASM
+or ByteBuddy to perform  bytecode rewriting' That enables them to
+operate in JDK releases prior to JDK22 that do not include the
 `java.lang.classfile` bytecode manipulation API. Unfortunately,
 when an agent has library dependencies this complicates
 deployment of the agent.
@@ -35,21 +35,20 @@ subpackage of the AOT agent package `org.my.aotagent`. That
 also requires ensuring that any reference to those classes,
 whether they are from agent classes or one library to another,
 are modified to add the `org.my.aotagent` prefix to their
-package (shading the transplanted packages from normal
-references, hence the name).
+package, locating them in the agent's package namespace.
 
-Shading of embedded libraries is particularly important when
+Shading of embedded libraries is very important when
 an agent jar is inserted into the bootstrap. There is always
-the danger of the unshadd version interfering with operation
+the danger of the unshaded version interfering with operation
 of the application. In this current example the agent bundles
 ASM 9.10.1. If the agent were to be deployed unshaded into an
 app that relied on some other version of ASM then adding the
 agent to the bootstrap would mean that application references
 to ASM classes would be resolved against the bundled library
-rather than the version included to the system classpath.
-Depending on what has changed between the two versions this
-might lead to a crash or, perhaps worse, small, subtle changes
-in behaviour that are difficult to spot.
+rather than the version in the classpath. Depending on what
+has changed between the two versions this might lead to a
+crash or, perhaps worse, small, subtle changes in behaviour
+that might be difficult to spot.
 
 ### Introduction
 This variant of the agent performs the same two transformations
@@ -84,8 +83,19 @@ mvn install
 ```
 ### Run
 ### Normal run
-The application is run by adding the app jar to the classpath
-and specifying  `HelloAgent` as the main class.
+
+A JDK25+ Java release of OpenJDK is required in order to be able to
+deploy the agent with an AOT cache. However, this version can be
+compiled and deployed with any JDK9+ Java release when run without an
+AOT cache since it does not rely on the JDK22+ classfile API. The
+advice given here will still apply for that case. In other words, the
+recommended command line modifications that enable use of an AOT cache
+should not cause a problem when switching from a JDK25+ release to an
+earlier release.
+
+The application is run by adding the app jar to the classpath and
+specifying `HelloAgent` as the main class.
+
 ```shell
 $ java -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
 Hello from AOT Agent
@@ -110,8 +120,8 @@ Hello from AOT Agent
 Total Thread.run count:        5
 ```
 The extra output shows that the calls to
-`AOTAgentStatstics,incrementRunCount()` and
-`AOTAgentStatstics.print()` have been successfully injected
+`AOTAgentStatistics,incrementRunCount()` and
+`AOTAgentStatistics.print()` have been successfully injected
 into the target classes `Thread` and `HelloAgent`.
 
 The `jar` command shows that the ASM classes used by the agent
