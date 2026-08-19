@@ -368,7 +368,7 @@ Removed temporary AOT configuration file HelloAgent.aot.config
 #### Running the app using the AOT cache and deploying the AOT agent as a non-modular bootstrap jar
 
 The agent can now be deployed with this cache in production using the
-same command lne options as were required when using a non-modular
+same command line options as were required when using a non-modular
 jar:
 
 ```shell
