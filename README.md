@@ -51,8 +51,8 @@ able to deploy the agent with an AOT cache (AOT caching is
 not supported in earlier JDK releases). That also ensures
 that the JDK includes the classfile API used to perform
 bytecode transformation. However, the advice given here
-will also apply for agents and apps that cane be compiled
-using earlier releasesgoing back to JDK9 when they are run
+will also apply for agents and apps that can be compiled
+using earlier releases going back to JDK9 when they are run
 without an AOT cache. In other words, the recommended command
 line modifications that enable use of an AOT cache should
 not cause a problem when switching from a JDK25+ release
