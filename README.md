@@ -46,17 +46,16 @@ mvn install
 The Maven build should work using any JDK9+ Java release.
 
 ### Run
-A JDK25+ Java release of OpenJDK is required in order to be
-able to deploy the agent with an AOT cache (AOT caching is
-not supported in earlier JDK releases). That also ensures
-that the JDK includes the classfile API used to perform
-bytecode transformation. However, the advice given here
-will also apply for agents and apps that can be compiled
-using earlier releases going back to JDK9 when they are run
-without an AOT cache. In other words, the recommended command
-line modifications that enable use of an AOT cache should
-not cause a problem when switching from a JDK25+ release
-to an earlier release.
+
+A JDK25+ Java release of OpenJDK is required in order to be able to
+deploy the agent with an AOT cache (AOT caching is not supported in
+earlier JDK releases). That also ensures that the JDK includes the
+classfile API used to perform bytecode transformation. However, the
+advice given here will also apply for agents and apps that can be
+compiled using earlier releases going back to JDK9 when they run
+without an AOT cache. In other words, the recommended command line
+modifications that enable use of an AOT cache should not cause a
+problem when switching from a JDK25+ release to an earlier release.
 
 ### Normal run
 The application is run by adding the app jar to the classpath
