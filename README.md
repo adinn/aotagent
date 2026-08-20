@@ -43,7 +43,6 @@ The agent and application jars can be built using Maven.
 ```
 mvn install
 ```
-The Maven build should work using any JDK9+ Java release.
 
 ### Run
 
@@ -82,7 +81,7 @@ Hello from AOT Agent
 Hello from AOT Agent
 No agent statistics to report
 ```
-The extra output shows that a call to `AOTAgentStatstics.print()`
+The extra output shows that a call to `AOTAgentStatistics.print()`
 has been successfully injected into method `HelloAgent.main`
 just before it returns.
 #### Running the app with an AOT cache
