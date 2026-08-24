@@ -2,13 +2,16 @@
 
 This maven-based project provides guidance for
 implementing and deploying agents that are compatible
-with use of an AOT cache.
+with use of an AOT cache. A simple example application
+and agent is used to focus the discussion, showing some
+of the problems that can occur and how they can be
+resolved.
 
 The project's main branch presents a simple agent that
-instruments code belonging to a small test application
-and shows how to create an AOT cache for the application
-and deploy the agent in a production run that uses the
-cache.
+instruments code belonging to a small test application.
+This README shows how to create an AOT cache for the
+application and how to deploy the agent in a production
+run that uses the cache.
 
 More sophisticated versions of the agent, which implement
 features agent writers often need to employ or exemplify
@@ -17,8 +20,8 @@ other branches of the project (listed and linked at the
 bottom of this file). The README files in those branches
 explain the additonal behaviour or structural benefits the
 variant agent offers and details the changes needed to
-build and deploy the agent compatibly with use of an AOT
-cache.
+build and deploy the relevant varinat of the agent
+compatibly with use of an AOT cache.
 
 
 ### Introduction
