@@ -23,6 +23,12 @@ variant agent offers and details the changes needed to
 build and deploy the relevant varinat of the agent
 compatibly with use of an AOT cache.
 
+Readers are recommended to check out and build the project, and to run
+it following the instructions given in the READMEs. The agent code
+should be simple enough to follow, even for those who are notexpert
+users of the Java JVMTI Agent and JDK Classfile library/ASM APIs.
+Otherwise, a Java debugger is recommended as the best tool to clarify
+how the agent operates.
 
 ### Introduction
 This simple version of the agent performs one instrumentation
