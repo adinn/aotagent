@@ -81,15 +81,16 @@ can function but its private implementation resides in the bootstrap's
 unnamed moduile, visible to and reflectively accessible from all
 application classes.
 
-Combining option `-Xbootclasspath/a` with any of the other command line
-options that configure modules, `--add-modules`,`--module-path` and
-`--upgrade-module-path`, will not remedy this problem. The root issue
-is that set of bootstrap modules is fixed during the JVM build process
-and cannot be modified at runtime. It might be possible to loosen this
-constraint in future JVMs, allowing modular agent jars to be deployed
-into the bootstrap classpath as modules. However, that option is not
-currently in the roadmap for the Java platform module system and it
-will not help when agents are deployed on existing releases
+Combining option `-Xbootclasspath/a` with any of the other command
+line options that configure modules, `--add-modules`,`--module-path`
+and `--upgrade-module-path`, will not remedy this problem. The root
+issue is that set of bootstrap modules is fixed during the JVM build
+process and cannot be modified at runtime. It might be possible to
+loosen this constraint in future JVM releases, allowing modular agent
+jars to be deployed into the bootstrap classpath as modules. Indeed,
+this option is being considered in the Java platform module system
+roadmap. However, that will not help when agents are deployed on
+existing releases.
 
 These difficulties are explained in more detail below using this
 version of the module to show the relevant configruation options and
@@ -99,14 +100,14 @@ implementation class prints details of its classloader and module in
 order to clarify which classloader and mdoule the agent code belong
 to.
 
-The source tree does include a new directory implementing a dummy
+The source tree does include a new directory tree implementing a dummy
 version of the desired module. This is needed in order to get round
-the limitations of the compiler and the mavenbuild system when it
-comes to including multiple source and jar products into a single
-jar. Unsurprisingly, the build steps are also different, requiring
-some manual intervention to address the operations that are not
-covered by the normal maven build process and normal JVM command line
-deployment options.
+the limitations of the compiler and the maven build system when it
+comes to building multiple sources and jars into a single jar. Along
+with this, the build steps also differ, requiring some manual
+intervention to address the operations that are not covered by the
+normal maven build process and normal JVM command line deployment
+options.
 
 ### How to package the shaded agent jar as a module jar 
 There are three significant obstacles to bypass in the normal
