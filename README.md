@@ -349,10 +349,12 @@ highly desirable from the point of view of code integrity and
 security, is currently only achievable for agents that do not attempt
 to transform JDK bootstrap classes (more precisely, they must not
 perform transformations of JDK bootstrap classes which involve
-reference to classes that are not already in the bootstrap). While
-this restriction rules out most useful agents, the exposition
-presented in the branch is still worth reading. As well as explaining
-the nature of the problems involved, it also provides an indication of
-indicate how one might in future deploy a modular agent in the
-bootstrap module set alongside an AOT cache, assuming newer JDK
-releases make it possible to resolve these issues.
+reference to classes that are not already in the bootstrap).
+
+While this restriction rules out most useful agents, the exposition
+presented in the branch is still worth reading. For a start, it
+clarifies what is currently missing from the JDK and from current
+buidl and packaging tools to allow the use of modular packaging for
+agents. More importantly, it points at a potential path for the JVM
+and tooling to go down in order to make agent deployment both more
+simple and more secure.
