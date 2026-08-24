@@ -2,7 +2,7 @@
 
 The previous version of the Java agent solves several
 common problems faced by agent developers while still
-maintaining copatibility with use of an AOT cache. It
+maintaining compatibility with use of an AOT cache. It
 transforms both application and bootstrap classes. It
 simplifies deployment by bundling its dependencies (the
 ASM library) into the agent jar. Lastly, it avoids
@@ -24,23 +24,25 @@ other bootstrap and app modules and also to classes loaded via the
 classpath.
 
 At the very least this is a question of code hygiene, ensuring clients
-do not mistakenly use internal classes. A more important reason to
-hide the implementation is that the `Instrumentation` instance passed
-to the agent entry class's `premain` and `agentmain` methods is stored
-in a static field of class `AOTAgentImpl`. That leaves it accessible
-to any application class via reflection. Access to an
-`Instrumentation` object grants clients the ability to perform many
-operations that can subvert normal JVM and application behaviour.
-leaving it open to reflective access makes it easier for malicious
-code to escalate a minor security exploit to a much more sophisticated
-and dangerous exploit.
+do not mistakenly use internal classes. This is particularly important
+for code which can be hoisted into the bootstrap classpath,
+intercepting potential link targets for arbitrary application code.
 
-A nice way to avoid this security issue is to package the jar
-as a module, exporting API packages but not the implementation
-package. However, nice as that sounds it is only achievable
-for the simple agent we started with (the one in the main
-beanch) that has no dependencies and only transforms application
-classes.
+A more important reason to hide the implementation is that the
+`Instrumentation` instance passed to the agent entry class's `premain`
+and `agentmain` methods is stored in a static field of class
+`AOTAgentImpl`. That leaves it accessible to any application class via
+reflection. Access to an `Instrumentation` object grants clients the
+ability to perform many operations that can subvert normal JVM and
+application behaviour.  leaving it open to reflective access makes it
+easier for malicious code to escalate a minor security exploit to a
+much more sophisticated and dangerous exploit.
+
+A nice way to bbypass this security issue is to package the jar as a
+module, exporting API packages but not the implementation
+package. However, nice as that sounds it is only readily achievable
+for the simple agent we started with (the one in the main beanch) that
+has no dependencies and only transforms application classes.
 
 ### Issues with building and deploying as a module
 
@@ -69,15 +71,17 @@ and packaging steps used to produce the agent jar. Resolving this
 issue requires working around some limitations of the maven/javac
 build process and the details are provided below.
 
-A more serious problem is that the agent cannot be deployed as
-a module and transform bootstrap classes. Of course, it is still
-possible to insert the modular agent jar into the bootstrap
-classpath, allowing it to inject references to its own classes
-into bootstrap code. However, the JVM will not then add the jar
-into the list of bootstrap modules, nor even treat the jar as a
-module.
+A more serious problem is that the agent cannot be deployed as a
+module and transform bootstrap classes. Of course, it is still
+possible to insert the modular agent jar into the bootstrap classpath,
+allowing it to inject references to its own classes into bootstrap
+code. However, the JVM will not then add the jar into the list of
+bootstrap modules, nor even treat the jar as a module. So, the agent
+can function but its private implementation resides in the bootstrap's
+unnamed moduile, visible to and reflectively accessible from all
+application classes.
 
-Combining option `-Xbootclasspath/a` with the other command line
+Combining option `-Xbootclasspath/a` with any of the other command line
 options that configure modules, `--add-modules`,`--module-path` and
 `--upgrade-module-path`, will not remedy this problem. The root issue
 is that set of bootstrap modules is fixed during the JVM build process
@@ -90,14 +94,19 @@ will not help when agents are deployed on existing releases
 These difficulties are explained in more detail below using this
 version of the module to show the relevant configruation options and
 associated JVM behaviour. The agent source code is not significantly
-changed. The main difference is that the main implementation class
-prints details of its classloader and module in order to clarify which
-classloader and mdoule the agent code belong to. The source tree also
-includes a new directory implementing a dummy version of the desired
-module. However, the build process is quite different, requiring some
-manual intervention to address the operations that are not covered by
-the normal maven build process and normal JVM command line deployment
-options.
+changed. The only significant difference is that the main
+implementation class prints details of its classloader and module in
+order to clarify which classloader and mdoule the agent code belong
+to.
+
+The source tree does include a new directory implementing a dummy
+version of the desired module. This is needed in order to get round
+the limitations of the compiler and the mavenbuild system when it
+comes to including multiple source and jar products into a single
+jar. Unsurprisingly, the build steps are also different, requiring
+some manual intervention to address the operations that are not
+covered by the normal maven build process and normal JVM command line
+deployment options.
 
 ### How to package the shaded agent jar as a module jar 
 There are three significant obstacles to bypass in the normal
