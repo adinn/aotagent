@@ -60,7 +60,7 @@ java.lang.Thread.run():
    . . .         RETURN
                  . . .  
 
-HelloAgent.main()
+Hello.main()
    . . .        . . .
    RETURN  -->  INVOKESTATIC AOTAgentStatistics.print()
    . . .         RETURN
@@ -73,7 +73,7 @@ rather than the JDK's own classfile bytecode transformer APIs.
 The other difference is that the agent omits both the
 "hoist" and "retransform" options. The user is expected to
 add the jar to the bootstrap path and the agent always checks
-to see if class `HelloAgent` has already been loaded and
+to see if class `Hello` has already been loaded and
 retransforms it if it is present.
 
 ### Build
@@ -94,10 +94,10 @@ should not cause a problem when switching from a JDK25+ release to an
 earlier release.
 
 The application is run by adding the app jar to the classpath and
-specifying `HelloAgent` as the main class.
+specifying `Hello` as the main class.
 
 ```shell
-$ java -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
+$ java -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar Hello
 Hello from AOT Agent
 Hello from AOT Agent
 Hello from AOT Agent
@@ -111,7 +111,7 @@ them at the agent jar
 ```shell
 $ java -Xbootclasspath/a:agent/target/aotagent-agent-1.0-SNAPSHOT.jar \
     -javaagent:agent/target/aotagent-agent-1.0-SNAPSHOT.jar \
-    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
+    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar Hello
 Hello from AOT Agent
 Hello from AOT Agent
 Hello from AOT Agent
@@ -122,7 +122,7 @@ Total Thread.run count:        5
 The extra output shows that the calls to
 `AOTAgentStatistics,incrementRunCount()` and
 `AOTAgentStatistics.print()` have been successfully injected
-into the target classes `Thread` and `HelloAgent`.
+into the target classes `Thread` and `Hello`.
 
 The `jar` command shows that the ASM classes used by the agent
 have been included in the agent jar:
@@ -141,30 +141,30 @@ for use with the agent requires module `java.instrument` to be
 included in the module graph and the agent jar to be inserted into
 the bootstrap classspath.
 ```shell
-$ java -XX:AOTCacheOutput=HelloAgent.aot \
+$ java -XX:AOTCacheOutput=Hello.aot \
     -Xbootclasspath/a:agent/target/aotagent-agent-1.0-SNAPSHOT.jar \
     --add-modules=java.instrument \
-    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
+    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar Hello
 Hello from AOT Agent
 Hello from AOT Agent
 Hello from AOT Agent
 Hello from AOT Agent
 Hello from AOT Agent
-Temporary AOTConfiguration recorded: HelloAgent.aot.config
-Launching child process /home/adinn/redhat/openjdk/jdkupdates/jdk25u/build/linux-x86_64-server-slowdebug/images/jdk/bin/java to assemble AOT cache HelloAgent.aot using configuration HelloAgent.aot.config
-Picked up JAVA_TOOL_OPTIONS: -Djava.class.path=app/target/aotagent-app-1.0-SNAPSHOT.jar -Xbootclasspath/a:agent/target/aotagent-agent-1.0-SNAPSHOT.jar --add-modules=java.instrument -XX:AOTCacheOutput=HelloAgent.aot -XX:AOTConfiguration=HelloAgent.aot.config -XX:AOTMode=create
-Reading AOTConfiguration HelloAgent.aot.config and writing AOTCache HelloAgent.aot
-AOTCache creation is complete: HelloAgent.aot 11354112 bytes
-Removed temporary AOT configuration file HelloAgent.aot.config
+Temporary AOTConfiguration recorded: Hello.aot.config
+Launching child process /home/adinn/redhat/openjdk/jdkupdates/jdk25u/build/linux-x86_64-server-slowdebug/images/jdk/bin/java to assemble AOT cache Hello.aot using configuration Hello.aot.config
+Picked up JAVA_TOOL_OPTIONS: -Djava.class.path=app/target/aotagent-app-1.0-SNAPSHOT.jar -Xbootclasspath/a:agent/target/aotagent-agent-1.0-SNAPSHOT.jar --add-modules=java.instrument -XX:AOTCacheOutput=Hello.aot -XX:AOTConfiguration=Hello.aot.config -XX:AOTMode=create
+Reading AOTConfiguration Hello.aot.config and writing AOTCache Hello.aot
+AOTCache creation is complete: Hello.aot 11354112 bytes
+Removed temporary AOT configuration file Hello.aot.config
 ```
 The agent can now be deployed with this cache in
 production so long as the agent jar is added to the
 bootstrap classpath:
 ```shell
-$ java -XX:AOTCache=HelloAgent.aot \
+$ java -XX:AOTCache=Hello.aot \
     -Xbootclasspath/a:agent/target/aotagent-agent-1.0-SNAPSHOT.jar \
     -javaagent:agent/target/aotagent-agent-1.0-SNAPSHOT.jar \
-    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
+    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar Hello
 Hello from AOT Agent
 Hello from AOT Agent
 Hello from AOT Agent

@@ -13,14 +13,14 @@ import java.security.ProtectionDomain;
 /**
  * A transformer that applies one simple transformations.
  *
- * 1. HelloAgent.main(): RETURN -> INVOKESTATIC AOTAgentStatistics.printStats() ; RETURN.
+ * 1. Hello.main(): RETURN -> INVOKESTATIC AOTAgentStatistics.printStats() ; RETURN.
  *
  * The transformation is performed unconditionally using the JDK's builtin class bytecode
  * manipulation library. The owner of the injected method target is an API class exported by
  * the AOT agent jar in its api subpackage.
  */
 public class AOTAgentTransformer implements ClassFileTransformer {
-    // constants needed to inject an INVOKE into HelloAgent.main
+    // constants needed to inject an INVOKE into Hello.main
     private final static String API_CLASS_NAME = Type.getInternalName(AOTAgentStatistics.class);
     private final static String INCREMENT_RUN_COUNT_METHOD_NAME = "incrementRunCount";
     private final static String PRINT_STATS_METHOD_NAME = "print";
@@ -37,7 +37,7 @@ public class AOTAgentTransformer implements ClassFileTransformer {
     @Override
     public byte[] transform(Module module, ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
         switch (className) {
-            case "HelloAgent":
+            case "Hello":
                 return doHelloTransform(module, loader, className, classBeingRedefined, protectionDomain, classfileBuffer);
             case "java/lang/Thread":
                 return doThreadTransform(module, loader, className, classBeingRedefined, protectionDomain, classfileBuffer);
