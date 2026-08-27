@@ -178,7 +178,7 @@ The `jar` tool can be used to extract this `module-info.class`
 and insert it into the shaded jar that we want to convert to a
 module.
 ```shell
-$ jar -xvf agent/target/aotagent-agent-1.0-SNAPSHOT.jar module-info.class
+$ jar -xvf dummy-agent/target/aotagent-dummy-agent-1.0-SNAPSHOT.jar module-info.class
 extracting to directory: .../aotagent/refinement3
 [adinn@zenade refinement3]$ jar -uvf agent/target/aotagent-agent-1.0-SNAPSHOT.jar module-info.class
 updated module-info: module-info.class
@@ -202,12 +202,12 @@ The application can be run with the agent deployed as a classpath
 module (i.e. a module loaded by the application loader) by adding the
 app jar to the module path, adding module `org.my.aotagent.agent`
 to the modules set, adding the agent jar again as a java agent
-and specifying `HelloAgent` as the main class.
+and specifying `Hello` as the main class.
 ```shell
 $ java --module-path=agent/target/aotagent-agent-1.0-SNAPSHOT.jar \
     --add-modules=org.my.aotagent.agent \
     -javaagent:agent/target/aotagent-agent-1.0-SNAPSHOT.jar \
-    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
+    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar Hello
 AOTAgentImpl running in module org.my.aotagent.agent
 UAOTAgentImpl classloader is app
 nable to transform bootstrap class java.lang.Thread
@@ -233,7 +233,7 @@ as a module.
 ```shell
 $ java -Xbootclasspath/a:agent/target/aotagent-agent-1.0-SNAPSHOT.jar \
     -javaagent:agent/target/aotagent-agent-1.0-SNAPSHOT.jar \
-    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
+    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar Hello
 AOTAgentImpl running in module null
 AOTAgentImpl classloader is null
 Hello from AOT Agent
@@ -255,7 +255,7 @@ to the command line does not remedy the problem
 $ java -Xbootclasspath/a:agent/target/aotagent-agent-1.0-SNAPSHOT.jar \
     --add-modules=org.my.aotagent.agent  \
     -javaagent:agent/target/aotagent-agent-1.0-SNAPSHOT.jar \
-    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
+    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar Hello
 Error occurred during initialization of boot layer
 java.lang.module.FindException: Module org.my.aotagent.agent not found
 ```
@@ -269,7 +269,7 @@ $ java -Xbootclasspath/a:agent/target/aotagent-agent-1.0-SNAPSHOT.jar \
     --add-modules=org.my.aotagent.agent  \
     --module-path=agent/target/aotagent-agent-1.0-SNAPSHOT.jar \
     -javaagent:agent/target/aotagent-agent-1.0-SNAPSHOT.jar \
-    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
+    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar Hello
 AOTAgentImpl running in module org.my.aotagent.agent
 AOTAgentImpl classloader is app
 Unable to transform bootstrap class java.lang.Thread
@@ -291,7 +291,7 @@ $ java -Xbootclasspath/a:agent/target/aotagent-agent-1.0-SNAPSHOT.jar \
     --add-modules=org.my.aotagent.agent  \
     --upgrade-module-path=agent/target/aotagent-agent-1.0-SNAPSHOT.jar \
     -javaagent:agent/target/aotagent-agent-1.0-SNAPSHOT.jar \
-    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
+    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar Hello
 AOTAgentImpl running in module org.my.aotagent.agent
 AOTAgentImpl classloader is app
 Unable to transform bootstrap class java.lang.Thread
@@ -313,32 +313,32 @@ included in the module graph. The OT agent also needs to be added
 to the module graph and the agent jar needs to be inserted into
 the module path
 ```shell
-$ java -XX:AOTCacheOutput=HelloAgent.aot \
+$ java -XX:AOTCacheOutput=Hello.aot \
     --add-modules=java.instrument,org.my.aotagent.agent \
     --module-path=agent/target/aotagent-agent-1.0-SNAPSHOT.jar \
-    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
+    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar Hello
 Hello from AOT Agent
 Hello from AOT Agent
 Hello from AOT Agent
 Hello from AOT Agent
 Hello from AOT Agent
-Temporary AOTConfiguration recorded: HelloAgent.aot.config
-Launching child process /home/adinn/redhat/openjdk/jdkupdates/jdk25u/build/linux-x86_64-server-slowdebug/images/jdk/bin/java to assemble AOT cache HelloAgent.aot using configuration HelloAgent.aot.config
-Picked up JAVA_TOOL_OPTIONS: -Djava.class.path=app/target/aotagent-app-1.0-SNAPSHOT.jar --add-modules=java.instrument,org.my.aotagent.agent --module-path=agent/target/aotagent-agent-1.0-SNAPSHOT.jar -XX:AOTCacheOutput=HelloAgent.aot -XX:AOTConfiguration=HelloAgent.aot.config -XX:AOTMode=create
-Reading AOTConfiguration HelloAgent.aot.config and writing AOTCache HelloAgent.aot
-AOTCache creation is complete: HelloAgent.aot 12054528 bytes
-Removed temporary AOT configuration file HelloAgent.aot.config
+Temporary AOTConfiguration recorded: Hello.aot.config
+Launching child process /home/adinn/redhat/openjdk/jdkupdates/jdk25u/build/linux-x86_64-server-slowdebug/images/jdk/bin/java to assemble AOT cache Hello.aot using configuration Hello.aot.config
+Picked up JAVA_TOOL_OPTIONS: -Djava.class.path=app/target/aotagent-app-1.0-SNAPSHOT.jar --add-modules=java.instrument,org.my.aotagent.agent --module-path=agent/target/aotagent-agent-1.0-SNAPSHOT.jar -XX:AOTCacheOutput=Hello.aot -XX:AOTConfiguration=Hello.aot.config -XX:AOTMode=create
+Reading AOTConfiguration Hello.aot.config and writing AOTCache Hello.aot
+AOTCache creation is complete: Hello.aot 12054528 bytes
+Removed temporary AOT configuration file Hello.aot.config
 ```
 #### Running the app using the AOT cache and deploying the AOT agent as a classpath module
 The agent can now be deployed with this cache in
 production so long as the agent jar is once again
 configured as a module:
 ```shell
-$ java -XX:AOTCache=HelloAgent.aot \
+$ java -XX:AOTCache=Hello.aot \
     --add-modules=java.instrument,org.my.aotagent.agent \
     --module-path=agent/target/aotagent-agent-1.0-SNAPSHOT.jar \
     -javaagent:agent/target/aotagent-agent-1.0-SNAPSHOT.jar \
-    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
+    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar Hello
 AOTAgentImpl running in module org.my.aotagent.agent
 AOTAgentImpl classloader is app
 Unable to transform bootstrap class java.lang.Thread
@@ -358,21 +358,21 @@ to insert the agent jar into the system classpath. Unfortunately,
 this means the jar is not treated as a module and so the deployment
 does not benefit from module encapsulation of internal agent classes.
 ```shell
-$ java -XX:AOTCacheOutput=HelloAgent.aot \
+$ java -XX:AOTCacheOutput=Hello.aot \
     --add-modules=java.instrument \
     -Xbootclasspath/a:agent/target/aotagent-agent-1.0-SNAPSHOT.jar \
-    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
+    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar Hello
 `Hello from AOT Agent
 Hello from AOT Agent
 Hello from AOT Agent
 Hello from AOT Agent
 Hello from AOT Agent
-Temporary AOTConfiguration recorded: HelloAgent.aot.config
-Launching child process /home/adinn/redhat/openjdk/jdkupdates/jdk25u/build/linux-x86_64-server-slowdebug/images/jdk/bin/java to assemble AOT cache HelloAgent.aot using configuration HelloAgent.aot.config
-Picked up JAVA_TOOL_OPTIONS: -Djava.class.path=app/target/aotagent-app-1.0-SNAPSHOT.jar --add-modules=java.instrument -Xbootclasspath/a:agent/target/aotagent-agent-1.0-SNAPSHOT.jar -XX:AOTCacheOutput=HelloAgent.aot -XX:AOTConfiguration=HelloAgent.aot.config -XX:AOTMode=create
-Reading AOTConfiguration HelloAgent.aot.config and writing AOTCache HelloAgent.aot
-AOTCache creation is complete: HelloAgent.aot 11358208 bytes
-Removed temporary AOT configuration file HelloAgent.aot.config
+Temporary AOTConfiguration recorded: Hello.aot.config
+Launching child process /home/adinn/redhat/openjdk/jdkupdates/jdk25u/build/linux-x86_64-server-slowdebug/images/jdk/bin/java to assemble AOT cache Hello.aot using configuration Hello.aot.config
+Picked up JAVA_TOOL_OPTIONS: -Djava.class.path=app/target/aotagent-app-1.0-SNAPSHOT.jar --add-modules=java.instrument -Xbootclasspath/a:agent/target/aotagent-agent-1.0-SNAPSHOT.jar -XX:AOTCacheOutput=Hello.aot -XX:AOTConfiguration=Hello.aot.config -XX:AOTMode=create
+Reading AOTConfiguration Hello.aot.config and writing AOTCache Hello.aot
+AOTCache creation is complete: Hello.aot 11358208 bytes
+Removed temporary AOT configuration file Hello.aot.config
 ```
 
 #### Running the app using the AOT cache and deploying the AOT agent as a non-modular bootstrap jar
@@ -382,11 +382,11 @@ same command line options as were required when using a non-modular
 jar:
 
 ```shell
-$ java -XX:AOTCache=HelloAgent.aot \
+$ java -XX:AOTCache=Hello.aot \
     --add-modules=java.instrument \
     -Xbootclasspath/a:agent/target/aotagent-agent-1.0-SNAPSHOT.jar \
     -javaagent:agent/target/aotagent-agent-1.0-SNAPSHOT.jar \
-    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
+    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar Hello
 AOTAgentImpl running in module null
 AOTAgentImpl classloader is null
 Hello from AOT Agent
