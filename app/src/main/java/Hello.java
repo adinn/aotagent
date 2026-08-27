@@ -27,7 +27,7 @@
  * Main class used as main to exercise the AOT Agent.
  */
 
-public class HelloAgent {
+public class Hello {
     public static void main(String... args) {
         // Use a runnable to exercise Thread.run
         Runnable r = new Runnable() {
