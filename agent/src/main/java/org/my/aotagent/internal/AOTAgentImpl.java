@@ -55,7 +55,7 @@ public class AOTAgentImpl {
     private static void tryRetransform() {
         // we only have one class to check and it will belong to the system loader
         for (Class<?> clazz : inst.getInitiatedClasses(ClassLoader.getSystemClassLoader())) {
-            if (clazz.getName().equals("HelloAgent")) {
+            if (clazz.getName().equals("Hello")) {
                 try {
                     inst.retransformClasses(clazz);
                 } catch (UnmodifiableClassException e) {

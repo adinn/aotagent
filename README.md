@@ -32,9 +32,9 @@ how the agent operates.
 
 ### Introduction
 This simple version of the agent performs one instrumentation
-to method `HelloAgent.main()`.
+to method `Hello.main()`.
 ```
-HelloAgent.main():
+Hello.main():
    . . .        . . .
    RETURN  -->  INVOKESTATIC AOTAgentStatistics.print()
    . . .         RETURN
@@ -67,9 +67,9 @@ problem when switching from a JDK25+ release to an earlier release.
 
 ### Normal run
 The application is run by adding the app jar to the classpath
-and specifying  `HelloAgent` as the main class.
+and specifying  `Hello` as the main class.
 ```shell
-$ java -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
+$ java -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar Hello
 Hello from AOT Agent
 Hello from AOT Agent
 Hello from AOT Agent
@@ -82,7 +82,7 @@ to the command line, pointing it at the agent jar. The app jar
 also needs to be included in the classpath.
 ```shell
 $ java -javaagent:agent/target/aotagent-agent-1.0-SNAPSHOT.jar \
-    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
+    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar Hello
 Hello from AOT Agent
 Hello from AOT Agent
 Hello from AOT Agent
@@ -91,32 +91,32 @@ Hello from AOT Agent
 No agent statistics to report
 ```
 The extra output shows that a call to `AOTAgentStatistics.print()`
-has been successfully injected into method `HelloAgent.main`
+has been successfully injected into method `Hello.main`
 just before it returns.
 #### Running the app with an AOT cache
 An AOT cache can be created by running the program as normal
 except for the addition of the `AOTCacheOutput` command line
 argument
 ```shell
-$ java -XX:AOTCacheOutput=HelloAgent.aot \
-    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
+$ java -XX:AOTCacheOutput=Hello.aot \
+    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar Hello
 Hello from AOT Agent
 Hello from AOT Agent
 Hello from AOT Agent
 Hello from AOT Agent
 Hello from AOT Agent
-Temporary AOTConfiguration recorded: HelloAgent.aot.config
-Launching child process /home/adinn/redhat/openjdk/jdkupdates/jdk25u/build/linux-x86_64-server-slowdebug/images/jdk/bin/java to assemble AOT cache HelloAgent.aot using configuration HelloAgent.aot.config
-Picked up JAVA_TOOL_OPTIONS: -Djava.class.path=app/target/aotagent-app-1.0-SNAPSHOT.jar -XX:AOTCacheOutput=HelloAgent.aot -XX:AOTConfiguration=HelloAgent.aot.config -XX:AOTMode=create
-Reading AOTConfiguration HelloAgent.aot.config and writing AOTCache HelloAgent.aot
-AOTCache creation is complete: HelloAgent.aot 10936320 bytes
-Removed temporary AOT configuration file HelloAgent.aot.config
+Temporary AOTConfiguration recorded: Hello.aot.config
+Launching child process /home/adinn/redhat/openjdk/jdkupdates/jdk25u/build/linux-x86_64-server-slowdebug/images/jdk/bin/java to assemble AOT cache Hello.aot using configuration Hello.aot.config
+Picked up JAVA_TOOL_OPTIONS: -Djava.class.path=app/target/aotagent-app-1.0-SNAPSHOT.jar -XX:AOTCacheOutput=Hello.aot -XX:AOTConfiguration=Hello.aot.config -XX:AOTMode=create
+Reading AOTConfiguration Hello.aot.config and writing AOTCache Hello.aot
+AOTCache creation is complete: Hello.aot 10936320 bytes
+Removed temporary AOT configuration file Hello.aot.config
 ```
 The cache can then be used by rerunning with option `AOTCache`
 specifying the same target for the AOT cache file
 ```shell
-$ java -XX:AOTCache=HelloAgent.aot \
-    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
+$ java -XX:AOTCache=Hello.aot \
+    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar Hello
 Hello from AOT Agent
 Hello from AOT Agent
 Hello from AOT Agent
@@ -138,9 +138,9 @@ In order to understand why it is necessary to change the cache
 build steps it is best to see first how the normal cache fails
 when an agent is configured.
 ```shell
-$ java -XX:AOTCache=HelloAgent.aot \
+$ java -XX:AOTCache=Hello.aot \
     -javaagent:agent/target/aotagent-agent-1.0-SNAPSHOT.jar \
-    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
+    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar Hello
 [0.016s][error][aot] An error has occurred while processing the AOT cache. Run with -Xlog:aot for details.
 [0.016s][error][aot] Mismatched values for property jdk.module.addmods: java.instrument specified during runtime but not during dump time
 [0.016s][error][aot] Disabling optimized module handling
@@ -181,20 +181,20 @@ performance.
 The solution is to ensure that module `java.instrument` is included
 in the module graph when the cache is built.
 ```shell
-$ java -XX:AOTCacheOutput=HelloAgent.aot \
+$ java -XX:AOTCacheOutput=Hello.aot \
     --add-modules=java.instrument \
-    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
+    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar Hello
 Hello from AOT Agent
 Hello from AOT Agent
 Hello from AOT Agent
 Hello from AOT Agent
 Hello from AOT Agent
-Temporary AOTConfiguration recorded: HelloAgent.aot.config
-Launching child process /home/adinn/redhat/openjdk/jdkupdates/jdk25u/build/linux-x86_64-server-slowdebug/images/jdk/bin/java to assemble AOT cache HelloAgent.aot using configuration HelloAgent.aot.config
-Picked up JAVA_TOOL_OPTIONS: -Djava.class.path=app/target/aotagent-app-1.0-SNAPSHOT.jar --add-modules=java.instrument -XX:AOTCacheOutput=HelloAgent.aot -XX:AOTConfiguration=HelloAgent.aot.config -XX:AOTMode=create
-Reading AOTConfiguration HelloAgent.aot.config and writing AOTCache HelloAgent.aot
-AOTCache creation is complete: HelloAgent.aot 11354112 bytes
-Removed temporary AOT configuration file HelloAgent.aot.config
+Temporary AOTConfiguration recorded: Hello.aot.config
+Launching child process /home/adinn/redhat/openjdk/jdkupdates/jdk25u/build/linux-x86_64-server-slowdebug/images/jdk/bin/java to assemble AOT cache Hello.aot using configuration Hello.aot.config
+Picked up JAVA_TOOL_OPTIONS: -Djava.class.path=app/target/aotagent-app-1.0-SNAPSHOT.jar --add-modules=java.instrument -XX:AOTCacheOutput=Hello.aot -XX:AOTConfiguration=Hello.aot.config -XX:AOTMode=create
+Reading AOTConfiguration Hello.aot.config and writing AOTCache Hello.aot
+AOTCache creation is complete: Hello.aot 11354112 bytes
+Removed temporary AOT configuration file Hello.aot.config
 ```
 When the agent is deployed during a production run that consumes the
 cache no update to the module graph is required and the bootstrap
@@ -202,9 +202,9 @@ classpath found at runtime matches the one used when building the
 cache. This guarantees that the class linkage employed when building
 the cache matches the class linkage used during the production run.
 ```shell
-$ java -XX:AOTCache=HelloAgent.aot \
+$ java -XX:AOTCache=Hello.aot \
     -javaagent:agent/target/aotagent-agent-1.0-SNAPSHOT.jar \
-    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
+    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar Hello
 Hello from AOT Agent
 Hello from AOT Agent
 Hello from AOT Agent
@@ -219,16 +219,16 @@ not been called.
 
 ### Creating an AOT-cache compatible Java agent
 The problem is that AOT caching has been too successful. Class
-`HelloAgent` is itself included in the cache. That means that
-during a production run `HelloAgent` is effectively 'pre-loaded'
+`Hello` is itself included in the cache. That means that
+during a production run `Hello` is effectively 'pre-loaded'
 by the System class loader before agent's transformer gets
 installed. The cache provides the JVM with pre-computed metadata
-for class `HelloAgent`, bypassing the need to load and process
+for class `Hello`, bypassing the need to load and process
 the class's bytecode.
 
-So, in effect, loading of class `HelloAgent` has 'already happened'
+So, in effect, loading of class `Hello` has 'already happened'
 and there is no triggering of the `ClassFileLoadHook` event for
-`HelloAgent` that would normally drive entry into the `transform`
+`Hello` that would normally drive entry into the `transform`
 method of the agent's `ClassFleTransformer`.
 
 That doesn't mean the agent is denied a chance to transform the
@@ -243,9 +243,9 @@ to do just that. Appending agent argument `"retransform"` to the
 redefine any target classes that it finds already loaded.
 
 ```shell
-java -XX:AOTCache=HelloAgent.aot \
+java -XX:AOTCache=Hello.aot \
     -javaagent:agent/target/aotagent-agent-1.0-SNAPSHOT.jar=retransform \
-    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
+    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar Hello
 Hello from AOT Agent
 Hello from AOT Agent
 Hello from AOT Agent
@@ -254,7 +254,7 @@ Hello from AOT Agent
 No agent statistics to report
 ```
 
-Note that the fact that the redefined class (`HelloAgent`) is already
+Note that the fact that the redefined class (`Hello`) is already
 loaded means that a transformer may not change the visible 'shape' of
 the class. Many agent transformers rely on being loaded early, before
 the apphas started, in order to catch classes at first load and change
@@ -278,10 +278,10 @@ depends on what classes the agent actually transforms. With the simple
 agent provided here there is nothing to stop the agent being used
 during training.
 ```shell
-$ java -XX:AOTCacheOutput=HelloAgent.aot \
+$ java -XX:AOTCacheOutput=Hello.aot \
     -javaagent:agent/target/aotagent-agent-1.0-SNAPSHOT.jar \
-    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
-[0.828s][warning][aot] Skipping HelloAgent: From ClassFileLoadHook
+    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar Hello
+[0.828s][warning][aot] Skipping Hello: From ClassFileLoadHook
 Hello from AOT Agent
 Hello from AOT Agent
 Hello from AOT Agent
@@ -293,17 +293,17 @@ No agent statistics to report
 [1.273s][warning][aot] Skipping org/my/aotagent/api/AOTAgentStatistics: Unsupported location
 [1.273s][warning][aot] Skipping org/my/aotagent/internal/AOTAgentTransformer: Unsupported location
 [1.273s][warning][aot] Skipping org/my/aotagent/internal/AOTAgentException: Unsupported location
-Temporary AOTConfiguration recorded: HelloAgent.aot.config
-Launching child process /home/adinn/redhat/openjdk/jdkupdates/jdk25u/build/linux-x86_64-server-slowdebug/images/jdk/bin/java to assemble AOT cache HelloAgent.aot using configuration HelloAgent.aot.config
-Picked up JAVA_TOOL_OPTIONS: -Djava.class.path=app/target/aotagent-app-1.0-SNAPSHOT.jar -javaagent:agent/target/aotagent-agent-1.0-SNAPSHOT.jar -XX:AOTCacheOutput=HelloAgent.aot -XX:AOTConfiguration=HelloAgent.aot.config -XX:AOTMode=create
-Reading AOTConfiguration HelloAgent.aot.config and writing AOTCache HelloAgent.aot
-AOTCache creation is complete: HelloAgent.aot 12095488 bytes
-Removed temporary AOT configuration file HelloAgent.aot.config
+Temporary AOTConfiguration recorded: Hello.aot.config
+Launching child process /home/adinn/redhat/openjdk/jdkupdates/jdk25u/build/linux-x86_64-server-slowdebug/images/jdk/bin/java to assemble AOT cache Hello.aot using configuration Hello.aot.config
+Picked up JAVA_TOOL_OPTIONS: -Djava.class.path=app/target/aotagent-app-1.0-SNAPSHOT.jar -javaagent:agent/target/aotagent-agent-1.0-SNAPSHOT.jar -XX:AOTCacheOutput=Hello.aot -XX:AOTConfiguration=Hello.aot.config -XX:AOTMode=create
+Reading AOTConfiguration Hello.aot.config and writing AOTCache Hello.aot
+AOTCache creation is complete: Hello.aot 12095488 bytes
+Removed temporary AOT configuration file Hello.aot.config
 ```
 
 Note that as a side-effect of training with the agent configured both
 the issues encountered above are bypassed. Firstly, the AOT cache
-build process excludes class `HelloAgent` from the cache because it
+build process excludes class `Hello` from the cache because it
 was transformed during the training run (the bytes used during
 training are recognized as having been modified under the
 `ClassFileLoadHook`). Also excluded are classes loaded from the agent
@@ -316,9 +316,9 @@ module is automatically added to the confiuration when the
 configuration for the training and production runs.
 
 ```shell
-`$ java -XX:AOTCache=HelloAgent.aot \
+`$ java -XX:AOTCache=Hello.aot \
     -javaagent:agent/target/aotagent-agent-1.0-SNAPSHOT.jar \
-    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar HelloAgent
+    -classpath app/target/aotagent-app-1.0-SNAPSHOT.jar Hello
 Hello from AOT Agent
 Hello from AOT Agent
 Hello from AOT Agent
@@ -327,7 +327,7 @@ Hello from AOT Agent
 No agent statistics to report
 ```
 
-Since the main class `HelloAgent` has been excluded from the AOT cache
+Since the main class `Hello` has been excluded from the AOT cache
 it gets loaded as normal after the agent transformer has been
 installed. So, there is no need to pass the `retransform` option to
 the agent in this case.

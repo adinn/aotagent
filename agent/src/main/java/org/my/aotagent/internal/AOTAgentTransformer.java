@@ -16,14 +16,14 @@ import static java.lang.constant.ConstantDescs.CD_void;
 /**
  * A transformer that applies one simple transformations.
  *
- * 1. HelloAgent.main(): RETURN -> INVOKESTATIC AOTAgentStatistics.printStats() ; RETURN.
+ * 1. Hello.main(): RETURN -> INVOKESTATIC AOTAgentStatistics.printStats() ; RETURN.
  *
  * The transformation is performed unconditionally using the JDK's builtin class bytecode
  * manipulation library. The owner of the injected method target is an API class exported by
  * the AOT agent jar in its api subpackage.
  */
 public class AOTAgentTransformer implements ClassFileTransformer {
-    // constants needed to inject an INVOKE into HelloAgent.main
+    // constants needed to inject an INVOKE into Hello.main
     private final static String API_PACKAGE = AOTAgentStatistics.class.getPackageName();
     private final static String API_CLASS_NAME = AOTAgentStatistics.class.getSimpleName();
     private final static ClassDesc API_CLASS_DESC = ClassDesc.of(API_PACKAGE, API_CLASS_NAME);
@@ -41,7 +41,7 @@ public class AOTAgentTransformer implements ClassFileTransformer {
     @Override
     public byte[] transform(Module module, ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
         switch (className) {
-            case "HelloAgent":
+            case "Hello":
                 return doHelloTransform(module, loader, className, classBeingRedefined, protectionDomain, classfileBuffer);
             default:
                 return null;
